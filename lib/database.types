@@ -1,0 +1,120 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      fields: {
+        Row: {
+          id: string
+          created_at: string
+          name: string
+          location: string
+          surface_type: string
+          price_per_hour: number
+          open_time: string
+          close_time: string
+          description: string | null
+          image_url: string | null
+          owner_id: string
+          contact_phone: string | null
+          contact_email: string | null
+          field_type: string
+          field_size: string | null
+          availability_json: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          name: string
+          location: string
+          surface_type: string
+          price_per_hour: number
+          open_time: string
+          close_time: string
+          description?: string | null
+          image_url?: string | null
+          owner_id: string
+          contact_phone?: string | null
+          contact_email?: string | null
+          field_type?: string
+          field_size?: string | null
+          availability_json?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          name?: string
+          location?: string
+          surface_type?: string
+          price_per_hour?: number
+          open_time?: string
+          close_time?: string
+          description?: string | null
+          image_url?: string | null
+          owner_id?: string
+          contact_phone?: string | null
+          contact_email?: string | null
+          field_type?: string
+          field_size?: string | null
+          availability_json?: string | null
+        }
+      }
+      bookings: {
+        Row: {
+          id: string
+          created_at: string
+          field_id: string
+          user_id: string
+          booking_date: string
+          start_time: string
+          end_time: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          field_id: string
+          user_id: string
+          booking_date: string
+          start_time: string
+          end_time: string
+          status?: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          field_id?: string
+          user_id?: string
+          booking_date?: string
+          start_time?: string
+          end_time?: string
+          status?: string
+        }
+      }
+      users: {
+        Row: {
+          id: string
+          email: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          role?: string
+          created_at?: string
+        }
+      }
+    }
+  }
+}
+
+export type Field = Database["public"]["Tables"]["fields"]["Row"]
+export type NewBooking = Database["public"]["Tables"]["bookings"]["Insert"]
+export type UserRole = "player" | "owner"
