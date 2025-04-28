@@ -1,26 +1,27 @@
 "use client"
 
 import { useEffect } from "react"
-import { clearAuthData } from "@/lib/auth-utils"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-context"
 import { Loader2 } from "lucide-react"
 
 export default function LogoutPage() {
-  useEffect(() => {
-    const logout = async () => {
-      // Clear auth data
-      clearAuthData()
+  const { signOut } = useAuth()
+  const router = useRouter()
 
-      // Redirect to home page with a full page refresh
-      window.location.href = "/"
+  useEffect(() => {
+    const performLogout = async () => {
+      await signOut()
+      router.push("/login")
     }
 
-    logout()
-  }, [])
+    performLogout()
+  }, [signOut, router])
 
   return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="flex flex-col items-center space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
         <p>Logging out...</p>
       </div>
     </div>

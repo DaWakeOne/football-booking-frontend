@@ -15,21 +15,23 @@ export async function createUserProfile(userId: string, email: string, role: Use
       .single()
 
     if (checkError && checkError.code !== "PGRST116") {
-      console.error("Error checking for existing user:", checkError)
+      console.error("Error checking user:", checkError)
       return { success: false, error: checkError.message }
     }
 
-    // If user already exists, don't create a new one
+    // If user already exists, return success
     if (existingUser) {
       return { success: true }
     }
 
-    // Create new user profile
-    const { error } = await supabase.from("users").insert({
-      id: userId,
-      email,
-      role,
-    })
+    // Create user profile
+    const { error } = await supabase.from("users").insert([
+      {
+        id: userId,
+        email,
+        role,
+      },
+    ])
 
     if (error) {
       console.error("Error creating user profile:", error)
@@ -38,7 +40,25 @@ export async function createUserProfile(userId: string, email: string, role: Use
 
     return { success: true }
   } catch (error: any) {
-    console.error("Unexpected error in createUserProfile:", error)
-    return { success: false, error: error.message || "An unexpected error occurred" }
+    console.error("Error in createUserProfile:", error)
+    return { success: false, error: error.message || "An error occurred" }
+  }
+}
+
+export async function getUserProfile(userId: string) {
+  try {
+    const supabase = createServerClient()
+
+    const { data, error } = await supabase.from("users").select("*").eq("id", userId).single()
+
+    if (error) {
+      console.error("Error getting user profile:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, data }
+  } catch (error: any) {
+    console.error("Error in getUserProfile:", error)
+    return { success: false, error: error.message || "An error occurred" }
   }
 }
