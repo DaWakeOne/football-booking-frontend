@@ -36,6 +36,18 @@ export function Navbar() {
                   <Link href="/schedule" className="text-sm font-medium">
                     Schedule
                   </Link>
+                  <Link href="/friends" className="text-sm font-medium">
+                    Friends
+                  </Link>
+                  <Link href="/chat" className="text-sm font-medium">
+                    Chat
+                  </Link>
+                  <Link href="/teams" className="text-sm font-medium">
+                    Teams
+                  </Link>
+                  <Link href="/offers" className="text-sm font-medium">
+                    Offers
+                  </Link>
                 </>
               )}
               {userRole === "owner" && (
@@ -68,9 +80,23 @@ export function Navbar() {
                   <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
                 {userRole === "player" && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/bookings">My Bookings</Link>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/bookings">My Bookings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/schedule">My Schedule</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/friends">Friends</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/chat">Chat</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/teams">Teams</Link>
+                    </DropdownMenuItem>
+                  </>
                 )}
                 {userRole === "owner" && (
                   <DropdownMenuItem asChild>

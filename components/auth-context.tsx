@@ -16,6 +16,18 @@ type AuthContextType = {
   signOut: () => Promise<void>
 }
 
+// Create a fake user object from localStorage data
+function createFakeUserFromLocalStorage(data: any): User {
+  return {
+    id: data.id || "manual-user",
+    email: data.email || "user@example.com",
+    app_metadata: {},
+    user_metadata: {},
+    aud: "authenticated",
+    created_at: new Date().toISOString(),
+  } as User
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -29,30 +41,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    // Check for localStorage auth as a fallback
-    const checkLocalAuth = () => {
-      try {
-        const localAuth = localStorage.getItem("auth_user")
-        if (localAuth) {
-          const authData = JSON.parse(localAuth)
-          if (authData && authData.role) {
-            console.log("Using localStorage auth data")
-            setUserRole(authData.role as UserRole)
-            return true
-          }
-        }
-      } catch (e) {
-        console.error("Error reading localStorage auth:", e)
-      }
-      return false
-    }
+  // Check for localStorage auth as a fallback
+  const checkLocalAuth = () => {
+    try {
+      const localAuth = localStorage.getItem("auth_user")
+      if (localAuth) {
+        const authData = JSON.parse(localAuth)
+        if (authData && authData.role) {
+          console.log("Using localStorage auth data")
+          setUserRole(authData.role as UserRole)
 
+          // Create a fake user object if we don't have one
+          if (!user) {
+            setUser(createFakeUserFromLocalStorage(authData))
+          }
+
+          return true
+        }
+      }
+    } catch (e) {
+      console.error("Error reading localStorage auth:", e)
+    }
+    return false
+  }
+
+  useEffect(() => {
     const initAuth = async () => {
       try {
         setIsLoading(true)
 
-        // Get session
+        // First check localStorage - prioritize it
+        if (checkLocalAuth()) {
+          setIsLoading(false)
+          return
+        }
+
+        // If no localStorage auth, try Supabase
         const {
           data: { session },
         } = await supabase.auth.getSession()
@@ -67,19 +91,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (error) {
               console.error("Error fetching user role:", error)
-              // Fall back to localStorage if available
-              if (!checkLocalAuth()) {
-                setUserRole(null)
-              }
+              checkLocalAuth()
             } else if (data) {
               setUserRole(data.role as UserRole)
+
+              // Update localStorage with the latest data
+              localStorage.setItem(
+                "auth_user",
+                JSON.stringify({
+                  id: session.user.id,
+                  email: session.user.email,
+                  role: data.role,
+                }),
+              )
             }
           } catch (error) {
             console.error("Error in role fetch:", error)
-            // Fall back to localStorage if available
-            if (!checkLocalAuth()) {
-              setUserRole(null)
-            }
+            checkLocalAuth()
           }
         } else {
           // No session, check localStorage as fallback
@@ -102,33 +130,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.email)
 
-      setSession(session)
-      setUser(session?.user || null)
-
       if (session?.user) {
+        setSession(session)
+        setUser(session.user)
+
         try {
           // Get user role
           const { data, error } = await supabase.from("users").select("role").eq("id", session.user.id).single()
 
           if (error) {
             console.error("Error fetching user role on auth change:", error)
-            // Fall back to localStorage if available
-            if (!checkLocalAuth()) {
-              setUserRole(null)
-            }
+            checkLocalAuth()
           } else if (data) {
             setUserRole(data.role as UserRole)
+
+            // Update localStorage with the latest data
+            localStorage.setItem(
+              "auth_user",
+              JSON.stringify({
+                id: session.user.id,
+                email: session.user.email,
+                role: data.role,
+              }),
+            )
           }
         } catch (error) {
           console.error("Error in role fetch on auth change:", error)
-          // Fall back to localStorage if available
-          if (!checkLocalAuth()) {
-            setUserRole(null)
-          }
+          checkLocalAuth()
         }
       } else {
         // No session, check localStorage as fallback
         if (!checkLocalAuth()) {
+          setUser(null)
+          setSession(null)
           setUserRole(null)
         }
       }

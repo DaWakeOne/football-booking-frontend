@@ -1,4 +1,5 @@
-"use client"
+import { PlayerLayoutWrapper } from "@/components/player-layout-wrapper"
+;("use client")
 
 import { useState } from "react"
 import { AuthCheck } from "@/components/auth-check"
@@ -50,7 +51,7 @@ const timeSlots = [
 // Days of the week
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-export default function SchedulePage() {
+function SchedulePageContent() {
   // State for the weekly recurring schedule
   const [weeklySchedule, setWeeklySchedule] = useState<Record<string, string[]>>({
     Monday: ["18:00", "19:00", "20:00"],
@@ -640,5 +641,14 @@ export default function SchedulePage() {
         <Toaster />
       </div>
     </AuthCheck>
+  )
+}
+
+export default function SchedulePage() {
+  return (
+    <PlayerLayoutWrapper>
+      <h1 className="text-2xl font-bold mb-6">My Schedule</h1>
+      <SchedulePageContent />
+    </PlayerLayoutWrapper>
   )
 }

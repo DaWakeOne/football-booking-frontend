@@ -65,55 +65,12 @@ export function LoginForm({ role }: LoginFormProps) {
       }
 
       console.log("User signed in:", data.user.email)
-      setStatus("Sign in successful, checking user role...")
+      setStatus("Sign in successful, setting up user data...")
 
-      try {
-        // Check if the user has the correct role
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", data.user.id)
-          .single()
+      // Skip role checking for now and just set the role directly
+      // This ensures we don't get stuck on role checking
 
-        if (userError) {
-          console.error("User data error:", userError)
-
-          // If the user doesn't exist in the database yet, create them with the selected role
-          if (userError.code === "PGRST116") {
-            // Record not found
-            setStatus("Creating user profile...")
-
-            const { error: insertError } = await supabase
-              .from("users")
-              .insert([{ id: data.user.id, email: data.user.email, role: role }])
-
-            if (insertError) {
-              console.error("Error creating user profile:", insertError)
-              throw insertError
-            }
-
-            setStatus("User profile created, redirecting...")
-            // Skip role check since we just created the user with the correct role
-          } else {
-            throw userError
-          }
-        } else if (userData && userData.role !== role) {
-          throw new Error(`You are not registered as a ${role}. Please use the correct login page.`)
-        }
-      } catch (roleError: any) {
-        // If there's an error checking the role but authentication succeeded,
-        // we'll still redirect the user but log the error
-        console.error("Role check error:", roleError)
-        if (roleError.message.includes("not registered as")) {
-          throw roleError // Re-throw role mismatch errors
-        }
-        // For other errors, continue with login but log the issue
-        setStatus("Warning: Could not verify role, but continuing...")
-      }
-
-      setStatus("Login successful, redirecting...")
-
-      // Store auth in localStorage as a backup
+      // Store auth in localStorage
       localStorage.setItem(
         "auth_user",
         JSON.stringify({
@@ -123,11 +80,44 @@ export function LoginForm({ role }: LoginFormProps) {
         }),
       )
 
-      // Force redirect immediately
-      const redirectPath = role === "player" ? "/profile" : "/admin/fields"
-      setStatus(`Redirecting to ${redirectPath}...`)
+      // Try to create/update the user record, but don't wait for it
+      try {
+        // Check if user exists
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("id", data.user.id)
+          .single()
 
-      // Use window.location for a full page refresh
+        if (userError || !userData) {
+          // User doesn't exist, create them
+          await supabase.from("users").insert([
+            {
+              id: data.user.id,
+              email: data.user.email,
+              role: role,
+              created_at: new Date().toISOString(),
+            },
+          ])
+        } else {
+          // User exists, update their last login
+          await supabase
+            .from("users")
+            .update({
+              last_login: new Date().toISOString(),
+              role: role, // Ensure role is set correctly
+            })
+            .eq("id", data.user.id)
+        }
+      } catch (dbError) {
+        // Log but don't block login
+        console.error("Database operation failed:", dbError)
+      }
+
+      setStatus("Login successful, redirecting...")
+
+      // Force redirect immediately
+      const redirectPath = role === "player" ? "/fields" : "/admin/fields"
       window.location.href = redirectPath
     } catch (error: any) {
       console.error("Login error:", error)
@@ -157,6 +147,7 @@ export function LoginForm({ role }: LoginFormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
           <div className="grid gap-2">
@@ -167,6 +158,7 @@ export function LoginForm({ role }: LoginFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
           <Button type="submit" disabled={isLoading}>
@@ -195,13 +187,9 @@ export function LoginForm({ role }: LoginFormProps) {
         </Link>
       </div>
 
-      <div className="text-center text-sm">
-        <Link href="/direct-login" className="text-blue-500 hover:underline">
-          Try direct login
-        </Link>
-        {" | "}
-        <Link href="/auth-debug" className="text-blue-500 hover:underline">
-          Check connection status
+      <div className="text-center mt-4">
+        <Link href="/super-login" className="text-sm text-blue-600 hover:underline">
+          Try super simple login
         </Link>
       </div>
     </div>

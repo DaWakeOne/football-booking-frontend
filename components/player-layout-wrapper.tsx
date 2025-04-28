@@ -2,21 +2,53 @@
 
 import type React from "react"
 
-import { useAuth } from "@/components/auth-provider.tsx"
-import PlayerLayout from "@/app/player-layout"
+import { useAuth } from "@/components/auth-context"
+import { Navbar } from "@/components/navbar"
+import { MobileNav } from "@/components/mobile-nav"
+import { PlayerLeftSidebar } from "@/components/player-left-sidebar"
+import { PlayerRightSidebar } from "@/components/player-right-sidebar"
+import { Footer } from "@/components/footer"
+import { Loader2 } from "lucide-react"
 
-interface PlayerLayoutWrapperProps {
-  children: React.ReactNode
-}
+export function PlayerLayoutWrapper({ children }: { children: React.ReactNode }) {
+  const { isLoading, user, userRole } = useAuth()
 
-export function PlayerLayoutWrapper({ children }: PlayerLayoutWrapperProps) {
-  const { user, userRole, isLoading } = useAuth()
-
-  // If the user is a player, wrap the content in the player layout
-  if (!isLoading && user && userRole === "player") {
-    return <PlayerLayout>{children}</PlayerLayout>
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
-  // Otherwise, just render the children
-  return <>{children}</>
+  if (!user || userRole !== "player") {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="text-xl font-bold">ActiModo</div>
+          <MobileNav />
+        </div>
+        <div className="flex-1 p-4">
+          <div className="bg-red-50 border border-red-200 p-4 rounded-md">
+            <h2 className="text-lg font-semibold text-red-700">Authentication Required</h2>
+            <p className="text-red-600">You need to be logged in as a player to view this page.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <div className="sticky top-0 z-40 bg-white">
+        <Navbar />
+      </div>
+      <div className="flex flex-1">
+        <PlayerLeftSidebar />
+        <main className="flex-1 p-4">{children}</main>
+        <PlayerRightSidebar />
+      </div>
+      <Footer />
+    </div>
+  )
 }
