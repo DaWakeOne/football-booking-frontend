@@ -2,25 +2,17 @@ import Link from "next/link"
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <main className="flex flex-col items-center justify-center w-full max-w-md">
-        <h1 className="text-4xl font-bold mb-8 text-center">ActiModo</h1>
-        <p className="text-xl mb-8 text-center">Football Field Booking Platform</p>
-        <div className="flex flex-col gap-4 w-full">
-          <Link
-            href="/minimal-login"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center"
-          >
-            Login
-          </Link>
-          <Link
-            href="/minimal-signup"
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-center"
-          >
-            Sign Up
-          </Link>
-        </div>
-      </main>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+      <h1 className="text-4xl font-bold mb-8">ActiModo</h1>
+      <p className="text-xl mb-8">Football Field Booking Platform</p>
+      <div className="flex gap-4">
+        <Link href="/about" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          About
+        </Link>
+        <Link href="/contact" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+          Contact
+        </Link>
+      </div>
+    </main>
   )
 }
