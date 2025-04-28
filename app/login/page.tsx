@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form"
+import { LoginFormWrapper } from "@/components/login-form-wrapper"
 
 export default function LoginPage() {
   return (
@@ -8,7 +8,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Login to your account</h1>
           <p className="text-sm text-muted-foreground">Enter your email below to login to your account</p>
         </div>
-        <LoginForm />
+        <LoginFormWrapper />
       </div>
     </div>
   )
