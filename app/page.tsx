@@ -4,15 +4,27 @@ import { Button } from "@/components/ui/button"
 export default function HomePage() {
   return (
     <main>
+      <header className="border-b">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="text-2xl font-bold">ActiMido</div>
+          <div className="flex gap-4">
+            <Button variant="outline" asChild>
+              <Link href="/login">Login</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/signup">Sign Up</Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       <section className="bg-gradient-to-b from-blue-50 to-white py-20">
         <div className="container">
           <div className="space-y-6">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-              Book Football Fields with Ease
-            </h1>
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">ActiMido</h1>
             <p className="text-gray-500 md:text-xl max-w-2xl">
-              ActiModo connects players with field owners for seamless booking experiences. Find and reserve the perfect
-              field for your game.
+              Connect players with field owners for seamless booking experiences. Find and reserve the perfect field for
+              your game.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Button size="lg" asChild>
@@ -52,7 +64,7 @@ export default function HomePage() {
 
       <footer className="bg-gray-100 py-6">
         <div className="container text-center text-gray-500">
-          <p>© 2023 ActiModo. All rights reserved.</p>
+          <p>© 2023 ActiMido. All rights reserved.</p>
         </div>
       </footer>
     </main>

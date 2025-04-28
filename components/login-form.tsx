@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,15 +11,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import type { UserRole } from "@/lib/database.types"
+import { createBrowserClient } from "@/lib/supabase"
 
 interface LoginFormProps {
   role: UserRole
 }
 
 export function LoginForm({ role }: LoginFormProps) {
-  const { supabase } = useAuth()
   const router = useRouter()
-
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -38,39 +36,52 @@ export function LoginForm({ role }: LoginFormProps) {
     setIsLoading(true)
 
     try {
+      // Create a new Supabase client for this request
+      const supabase = createBrowserClient()
+
       // Sign in the user
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (signInError) throw signInError
-
-      if (data.user) {
-        // Check if the user has the correct role
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", data.user.id)
-          .single()
-
-        if (userError) throw userError
-
-        if (userData.role !== role) {
-          throw new Error(`You are not registered as a ${role}. Please use the correct login page.`)
-        }
-
-        // Redirect based on role
-        const redirectPath =
-          sessionStorage.getItem("redirectAfterLogin") || (role === "player" ? "/profile" : "/admin/fields")
-
-        sessionStorage.removeItem("redirectAfterLogin")
-        router.push(redirectPath)
+      if (signInError) {
+        console.error("Sign in error:", signInError)
+        throw signInError
       }
+
+      if (!data.user) {
+        throw new Error("No user returned from login")
+      }
+
+      // Check if the user has the correct role
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", data.user.id)
+        .single()
+
+      if (userError) {
+        console.error("User data error:", userError)
+        throw userError
+      }
+
+      if (userData.role !== role) {
+        throw new Error(`You are not registered as a ${role}. Please use the correct login page.`)
+      }
+
+      // Redirect based on role
+      if (role === "player") {
+        router.push("/profile")
+      } else {
+        router.push("/admin/fields")
+      }
+
+      // Force a page refresh to ensure auth state is updated
+      window.location.href = role === "player" ? "/profile" : "/admin/fields"
     } catch (error: any) {
       console.error("Login error:", error)
       setError(error.message || "An error occurred during login")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -107,7 +118,7 @@ export function LoginForm({ role }: LoginFormProps) {
               disabled={isLoading}
             />
           </div>
-          <Button disabled={isLoading}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
