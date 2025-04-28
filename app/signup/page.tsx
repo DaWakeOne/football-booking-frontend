@@ -1,19 +1,21 @@
-import { SignupForm } from "@/components/signup-form"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-4 rounded-lg border p-6 shadow-md">
-        <h1 className="text-2xl font-bold">Sign Up</h1>
-        <p className="text-gray-600">Create a new account</p>
-        <SignupForm />
-        <div className="text-center text-sm">
-          <p>
-            Already have an account?{" "}
-            <a href="/login" className="text-blue-600 hover:underline">
-              Login
-            </a>
-          </p>
+    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+        <div className="flex flex-col space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">Create an Account</h1>
+          <p className="text-sm text-muted-foreground">Choose your account type below</p>
+        </div>
+        <div className="grid gap-4">
+          <Button asChild>
+            <Link href="/signup/player">Sign Up as Player</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/signup/owner">Sign Up as Field Owner</Link>
+          </Button>
         </div>
       </div>
     </div>

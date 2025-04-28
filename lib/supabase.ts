@@ -1,49 +1,47 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "./database.types"
 
-// Function to get Supabase URL with fallback for build time
+// Get Supabase URL and anon key from environment variables
 export function getSupabaseUrl() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!url) {
-    // During build time, return a placeholder
-    if (process.env.NODE_ENV === "production") {
-      console.warn("NEXT_PUBLIC_SUPABASE_URL is not defined, using placeholder for build")
-      return "https://placeholder-for-build.supabase.co"
-    }
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not defined")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl) {
+    console.warn("Missing NEXT_PUBLIC_SUPABASE_URL environment variable")
+    return "https://placeholder.supabase.co" // Placeholder for build time
   }
-  return url
+  return supabaseUrl
 }
 
-// Function to get Supabase anon key with fallback for build time
 export function getSupabaseAnonKey() {
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!key) {
-    // During build time, return a placeholder
-    if (process.env.NODE_ENV === "production") {
-      console.warn("NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined, using placeholder for build")
-      return "placeholder-key-for-build-time"
-    }
-    throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined")
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseAnonKey) {
+    console.warn("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable")
+    return "placeholder-key" // Placeholder for build time
   }
-  return key
+  return supabaseAnonKey
 }
 
-// Create a Supabase client for server-side usage
-export function createServerClient() {
-  return createClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
+// Create a Supabase client for use in the browser
+export function createBrowserClient() {
+  const supabaseUrl = getSupabaseUrl()
+  const supabaseAnonKey = getSupabaseAnonKey()
+
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: false,
+      persistSession: true,
+      autoRefreshToken: true,
     },
   })
 }
 
-// Create a Supabase client for browser usage
-export function createBrowserClient() {
-  return createClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
+// Create a Supabase client for use in server components
+export function createServerClient() {
+  const supabaseUrl = getSupabaseUrl()
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-service-key"
+
+  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
     auth: {
-      persistSession: true,
-      storageKey: "supabase_auth_token",
+      persistSession: false,
+      autoRefreshToken: false,
     },
   })
 }

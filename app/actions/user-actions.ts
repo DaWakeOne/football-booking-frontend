@@ -14,33 +14,31 @@ export async function createUserProfile(userId: string, email: string, role: Use
       .eq("id", userId)
       .single()
 
-    if (!checkError && existingUser) {
-      // User already exists, update their role
-      const { error: updateError } = await supabase.from("users").update({ role }).eq("id", userId)
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("Error checking for existing user:", checkError)
+      return { success: false, error: checkError.message }
+    }
 
-      if (updateError) {
-        console.error("Error updating user role:", updateError)
-        return { success: false, error: updateError.message }
-      }
-
+    // If user already exists, don't create a new one
+    if (existingUser) {
       return { success: true }
     }
 
-    // Create new user
-    const { error: insertError } = await supabase.from("users").insert({
+    // Create new user profile
+    const { error } = await supabase.from("users").insert({
       id: userId,
       email,
       role,
     })
 
-    if (insertError) {
-      console.error("Error creating user profile:", insertError)
-      return { success: false, error: insertError.message }
+    if (error) {
+      console.error("Error creating user profile:", error)
+      return { success: false, error: error.message }
     }
 
     return { success: true }
   } catch (error: any) {
-    console.error("Unexpected error creating user profile:", error)
+    console.error("Unexpected error in createUserProfile:", error)
     return { success: false, error: error.message || "An unexpected error occurred" }
   }
 }
