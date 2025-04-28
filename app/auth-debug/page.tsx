@@ -3,47 +3,69 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { getAuthData, clearAuthData, loginUser } from "@/lib/auth-utils"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { UserRole } from "@/lib/database.types"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { createClient } from "@supabase/supabase-js"
+import Link from "next/link"
 
 export default function AuthDebugPage() {
-  const [authData, setAuthData] = useState<any>(null)
-  const [email, setEmail] = useState("")
-  const [role, setRole] = useState<UserRole>("player")
+  const [supabaseUrl, setSupabaseUrl] = useState<string | null>(null)
+  const [supabaseKey, setSupabaseKey] = useState<string | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState<"checking" | "success" | "error">("checking")
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [localAuth, setLocalAuth] = useState<any>(null)
 
   useEffect(() => {
-    // Get auth data
-    const data = getAuthData()
-    setAuthData(data)
+    // Check environment variables
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    if (data?.email) {
-      setEmail(data.email)
+    setSupabaseUrl(url || null)
+    setSupabaseKey(key || null)
+
+    // Check localStorage auth
+    try {
+      const authData = localStorage.getItem("auth_user")
+      if (authData) {
+        setLocalAuth(JSON.parse(authData))
+      }
+    } catch (e) {
+      console.error("Error reading localStorage:", e)
     }
 
-    if (data?.role) {
-      setRole(data.role)
+    // Test Supabase connection
+    const testConnection = async () => {
+      if (!url || !key) {
+        setConnectionStatus("error")
+        setErrorMessage("Missing Supabase configuration")
+        return
+      }
+
+      try {
+        const supabase = createClient(url, key)
+        const { error } = await supabase.from("users").select("count").limit(1)
+
+        if (error) {
+          setConnectionStatus("error")
+          setErrorMessage(`Database error: ${error.message}`)
+        } else {
+          setConnectionStatus("success")
+        }
+      } catch (error: any) {
+        setConnectionStatus("error")
+        setErrorMessage(`Connection error: ${error.message}`)
+      }
     }
+
+    testConnection()
   }, [])
 
-  const handleClearAuth = () => {
-    clearAuthData()
-    setAuthData(null)
-  }
-
-  const handleSetAuth = () => {
-    if (!email) return
-
-    loginUser(email, role)
-
-    // Update the displayed auth data
-    setAuthData(getAuthData())
-  }
-
-  const handleRedirect = (path: string) => {
-    window.location.href = path
+  const clearLocalAuth = () => {
+    try {
+      localStorage.removeItem("auth_user")
+      setLocalAuth(null)
+    } catch (e) {
+      console.error("Error clearing localStorage:", e)
+    }
   }
 
   return (
@@ -53,23 +75,18 @@ export default function AuthDebugPage() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Current Auth State</CardTitle>
-            <CardDescription>Current authentication data from localStorage</CardDescription>
+            <CardTitle>Environment Variables</CardTitle>
+            <CardDescription>Check if Supabase configuration is available</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <pre className="bg-muted p-4 rounded text-xs overflow-auto max-h-40">
-                {authData ? JSON.stringify(authData, null, 2) : "No auth data found"}
-              </pre>
-
-              <div className="flex gap-2">
-                <Button variant="destructive" onClick={handleClearAuth} disabled={!authData}>
-                  Clear Auth Data
-                </Button>
-
-                <Button onClick={() => handleRedirect("/")} variant="outline">
-                  Go to Home
-                </Button>
+            <div className="space-y-2">
+              <div>
+                <p className="font-medium">NEXT_PUBLIC_SUPABASE_URL:</p>
+                <p>{supabaseUrl ? "✅ Set" : "❌ Not set"}</p>
+              </div>
+              <div>
+                <p className="font-medium">NEXT_PUBLIC_SUPABASE_ANON_KEY:</p>
+                <p>{supabaseKey ? "✅ Set" : "❌ Not set"}</p>
               </div>
             </div>
           </CardContent>
@@ -77,48 +94,64 @@ export default function AuthDebugPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Set Auth Data</CardTitle>
-            <CardDescription>Manually set authentication data</CardDescription>
+            <CardTitle>Supabase Connection</CardTitle>
+            <CardDescription>Test connection to Supabase</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="player">Player</SelectItem>
-                    <SelectItem value="owner">Owner</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex gap-2">
-                <Button onClick={handleSetAuth}>Set Auth Data</Button>
-
-                <Button
-                  onClick={() => handleRedirect(role === "player" ? "/profile" : "/admin/fields")}
-                  variant="outline"
-                >
-                  Go to {role === "player" ? "Profile" : "Admin"}
-                </Button>
-              </div>
-            </div>
+            {connectionStatus === "checking" && <p>Checking connection...</p>}
+            {connectionStatus === "success" && (
+              <Alert className="bg-green-50 border-green-200">
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>Connection to Supabase is working</AlertDescription>
+              </Alert>
+            )}
+            {connectionStatus === "error" && (
+              <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Local Authentication</CardTitle>
+            <CardDescription>Check localStorage auth data</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {localAuth ? (
+              <div className="space-y-2">
+                <div>
+                  <p className="font-medium">User ID:</p>
+                  <p className="text-sm">{localAuth.id}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Email:</p>
+                  <p>{localAuth.email}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Role:</p>
+                  <p className="capitalize">{localAuth.role}</p>
+                </div>
+                <Button variant="destructive" size="sm" onClick={clearLocalAuth}>
+                  Clear Local Auth
+                </Button>
+              </div>
+            ) : (
+              <p>No local authentication data found</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-center space-x-4">
+          <Button asChild>
+            <Link href="/direct-login">Try Direct Login</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/login">Back to Login</Link>
+          </Button>
+        </div>
       </div>
     </div>
   )

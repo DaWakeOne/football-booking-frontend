@@ -123,11 +123,12 @@ export function LoginForm({ role }: LoginFormProps) {
         }),
       )
 
-      // Redirect with a slight delay to ensure the status message is seen
-      setTimeout(() => {
-        // Redirect based on role
-        window.location.href = role === "player" ? "/profile" : "/admin/fields"
-      }, 500)
+      // Force redirect immediately
+      const redirectPath = role === "player" ? "/profile" : "/admin/fields"
+      setStatus(`Redirecting to ${redirectPath}...`)
+
+      // Use window.location for a full page refresh
+      window.location.href = redirectPath
     } catch (error: any) {
       console.error("Login error:", error)
       setError(error.message || "An error occurred during login")
@@ -191,6 +192,16 @@ export function LoginForm({ role }: LoginFormProps) {
         Don't have an account?{" "}
         <Link href={`/signup/${role}`} className="underline">
           Sign up
+        </Link>
+      </div>
+
+      <div className="text-center text-sm">
+        <Link href="/direct-login" className="text-blue-500 hover:underline">
+          Try direct login
+        </Link>
+        {" | "}
+        <Link href="/auth-debug" className="text-blue-500 hover:underline">
+          Check connection status
         </Link>
       </div>
     </div>
