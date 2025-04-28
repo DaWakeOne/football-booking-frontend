@@ -1,101 +1,55 @@
+"use client"
+
 import type { UserRole } from "@/lib/database.types"
 
-// Define the auth user type
-export interface AuthUser {
-  id: string
-  email: string
-  role: UserRole
-  timestamp: number
-}
-
-// Key for localStorage
-const AUTH_KEY = "football_booking_auth"
-
-// Save auth data to localStorage
-export function saveAuthData(user: AuthUser): void {
+export function isAuthenticated(): boolean {
   try {
-    localStorage.setItem(AUTH_KEY, JSON.stringify(user))
-
-    // Also set a global variable for immediate access
-    if (typeof window !== "undefined") {
-      ;(window as any).__AUTH_USER = user
-    }
-
-    console.log("Auth data saved successfully:", user)
-  } catch (error) {
-    console.error("Failed to save auth data:", error)
+    const authUser = localStorage.getItem("auth_user")
+    return !!authUser
+  } catch (e) {
+    console.error("Error checking authentication:", e)
+    return false
   }
 }
 
-// Get auth data from localStorage
-export function getAuthData(): AuthUser | null {
+export function getUserRole(): UserRole | null {
   try {
-    // First check the global variable for immediate access
-    if (typeof window !== "undefined" && (window as any).__AUTH_USER) {
-      return (window as any).__AUTH_USER
+    const authUser = localStorage.getItem("auth_user")
+    if (authUser) {
+      const userData = JSON.parse(authUser)
+      return userData.role as UserRole
     }
-
-    // Then check localStorage
-    const data = localStorage.getItem(AUTH_KEY)
-    if (!data) return null
-
-    const user = JSON.parse(data) as AuthUser
-
-    // Set the global variable for future immediate access
-    if (typeof window !== "undefined") {
-      ;(window as any).__AUTH_USER = user
-    }
-
-    return user
-  } catch (error) {
-    console.error("Failed to get auth data:", error)
+    return null
+  } catch (e) {
+    console.error("Error getting user role:", e)
     return null
   }
 }
 
-// Clear auth data
-export function clearAuthData(): void {
+export function getUserId(): string | null {
   try {
-    localStorage.removeItem(AUTH_KEY)
-
-    // Also clear the global variable
-    if (typeof window !== "undefined") {
-      ;(window as any).__AUTH_USER = null
+    const authUser = localStorage.getItem("auth_user")
+    if (authUser) {
+      const userData = JSON.parse(authUser)
+      return userData.id
     }
-
-    console.log("Auth data cleared successfully")
-  } catch (error) {
-    console.error("Failed to clear auth data:", error)
+    return null
+  } catch (e) {
+    console.error("Error getting user ID:", e)
+    return null
   }
 }
 
-// Check if user is authenticated
-export function isAuthenticated(): boolean {
-  return getAuthData() !== null
-}
-
-// Get user role
-export function getUserRole(): UserRole | null {
-  const user = getAuthData()
-  return user ? user.role : null
-}
-
-// Generate a user ID from email (for demo purposes)
-export function generateUserId(email: string): string {
-  // Create a consistent ID based on email
-  return btoa(email).replace(/=/g, "").substring(0, 36)
-}
-
-// Login user
-export function loginUser(email: string, role: UserRole): void {
-  const userId = generateUserId(email)
-
-  const user: AuthUser = {
-    id: userId,
-    email,
-    role,
-    timestamp: Date.now(),
+export function getUserEmail(): string | null {
+  try {
+    const authUser = localStorage.getItem("auth_user")
+    if (authUser) {
+      const userData = JSON.parse(authUser)
+      return userData.email
+    }
+    return null
+  } catch (e) {
+    console.error("Error getting user email:", e)
+    return null
   }
-
-  saveAuthData(user)
 }

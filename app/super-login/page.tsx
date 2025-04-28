@@ -1,101 +1,92 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import Link from "next/link"
 import type { UserRole } from "@/lib/database.types"
 
 export default function SuperLoginPage() {
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState("user@example.com")
   const [role, setRole] = useState<UserRole>("player")
-  const [isLoading, setIsLoading] = useState(false)
-  const [status, setStatus] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setStatus("Setting up manual authentication...")
-
-    // Generate a fake user ID
-    const userId = `manual-${Math.random().toString(36).substring(2, 15)}`
+  const handleLogin = () => {
+    // Create a fake user ID
+    const userId = `manual-${Date.now()}`
 
     // Store auth in localStorage
     localStorage.setItem(
       "auth_user",
       JSON.stringify({
         id: userId,
-        email: email || "player@example.com",
+        email: email,
         role: role,
       }),
     )
 
-    setStatus("Authentication set, redirecting...")
+    setSuccess(true)
 
-    // Force redirect immediately
+    // Redirect after a short delay
     setTimeout(() => {
-      const redirectPath = role === "player" ? "/profile" : "/admin/fields"
-      window.location.href = redirectPath
+      window.location.href = role === "player" ? "/fields" : "/admin/fields"
     }, 1000)
   }
 
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
-      <Card className="mx-auto w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Super Simple Login</CardTitle>
-          <CardDescription>Bypass all authentication and just set localStorage</CardDescription>
+    <div className="container max-w-md py-12">
+      <Card>
+        <CardHeader>
+          <CardTitle>Super Simple Login</CardTitle>
+          <CardDescription>This login bypasses Supabase completely and just sets localStorage data</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email (optional)</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <select
-                id="role"
-                className="w-full rounded-md border border-input bg-background px-3 py-2"
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                disabled={isLoading}
-              >
-                <option value="player">Player</option>
-                <option value="owner">Owner</option>
-              </select>
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Setting up...
-                </>
-              ) : (
-                "Login Instantly"
-              )}
-            </Button>
-          </form>
-
-          {status && (
-            <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 text-sm rounded text-center">
-              <p>Status: {status}</p>
-            </div>
+        <CardContent className="space-y-4">
+          {success && (
+            <Alert className="mb-4">
+              <AlertTitle>Login successful!</AlertTitle>
+              <AlertDescription>Redirecting you to your dashboard...</AlertDescription>
+            </Alert>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email (optional)</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email"
+            />
+            <p className="text-xs text-muted-foreground">
+              This is just for display purposes, no validation is performed
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Select your role</Label>
+            <RadioGroup value={role} onValueChange={(value) => setRole(value as UserRole)}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="player" id="player" />
+                <Label htmlFor="player">Player</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="owner" id="owner" />
+                <Label htmlFor="owner">Field Owner</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <p className="text-xs text-muted-foreground">This bypasses all authentication and just sets localStorage.</p>
+        <CardFooter className="flex flex-col gap-4">
+          <Button className="w-full" onClick={handleLogin}>
+            Login Instantly
+          </Button>
+          <Link href="/login/player" className="text-sm text-center text-blue-600 hover:underline">
+            Back to normal login
+          </Link>
         </CardFooter>
       </Card>
     </div>
