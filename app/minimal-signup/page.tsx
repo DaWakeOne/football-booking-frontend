@@ -2,109 +2,115 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useState } from "react"
 
-export default function MinimalSignupPage() {
+export default function MinimalSignup() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [role, setRole] = useState("player")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError("")
-
-    try {
-      // Simulate signup
-      console.log("Signing up with:", { email, role })
-
-      // Redirect to home page after "signup"
-      setTimeout(() => {
-        router.push("/")
-      }, 1000)
-    } catch (err) {
-      setError("Failed to sign up. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
+    // In a real app, you would handle signup here
+    console.log("Signup attempt with:", email, password, role)
+    alert("Signup functionality will be implemented soon!")
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Sign Up for ActiModo</h1>
-          <p className="mt-2 text-gray-600">Create your account to get started</p>
-        </div>
+      <main className="flex flex-col items-center justify-center w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-6 text-center">Sign Up for ActiModo</h1>
 
-        {error && <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email
             </label>
             <input
-              id="email"
               type="email"
-              required
+              id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full p-2 border rounded"
+              required
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <div className="mb-4">
+            <label htmlFor="password" className="block text-sm font-medium mb-1">
               Password
             </label>
             <input
-              id="password"
               type="password"
-              required
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full p-2 border rounded"
+              required
             />
           </div>
 
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-              Role
+          <div className="mb-4">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+              Confirm Password
             </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="player">Player</option>
-              <option value="owner">Field Owner</option>
-            </select>
+            <input
+              type="password"
+              id="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-2 border rounded"
+              required
+            />
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {isLoading ? "Signing up..." : "Sign Up"}
-            </button>
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">I am a:</label>
+            <div className="flex gap-4">
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  value="player"
+                  checked={role === "player"}
+                  onChange={() => setRole("player")}
+                  className="mr-2"
+                />
+                Player
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  value="owner"
+                  checked={role === "owner"}
+                  onChange={() => setRole("owner")}
+                  className="mr-2"
+                />
+                Field Owner
+              </label>
+            </div>
           </div>
+
+          <button
+            type="submit"
+            className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Sign Up
+          </button>
         </form>
 
-        <div className="text-center mt-4">
-          <Link href="/minimal-login" className="text-indigo-600 hover:text-indigo-500">
-            Already have an account? Login
+        <p className="mt-4">
+          Already have an account?{" "}
+          <Link href="/minimal-login" className="text-blue-500 hover:underline">
+            Login
           </Link>
-        </div>
-      </div>
+        </p>
+
+        <Link href="/" className="mt-8 text-gray-500 hover:underline">
+          Back to Home
+        </Link>
+      </main>
     </div>
   )
 }

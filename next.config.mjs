@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disable static generation completely
+  output: 'export',
   // Ignore build errors to get a successful build
   typescript: {
     ignoreBuildErrors: true,
