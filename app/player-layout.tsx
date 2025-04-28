@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/auth-provider.tsx"
 import { redirect } from "next/navigation"
 import { useEffect } from "react"
 import { PlayerLeftSidebar } from "@/components/player-left-sidebar"

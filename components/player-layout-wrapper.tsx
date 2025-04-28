@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/auth-provider.tsx"
 import PlayerLayout from "@/app/player-layout"
 
 interface PlayerLayoutWrapperProps {
