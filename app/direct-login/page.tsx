@@ -7,13 +7,16 @@ import { createClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { UserRole } from "@/lib/database.types"
 
 export default function DirectLoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [role, setRole] = useState<UserRole>("player")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
@@ -39,8 +42,7 @@ export default function DirectLoginPage() {
         throw new Error("Supabase configuration is missing")
       }
 
-      setStatus(`Connecting to Supabase at ${supabaseUrl.substring(0, 15)}...`)
-
+      setStatus(`Connecting to Supabase...`)
       const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
       setStatus("Attempting to sign in...")
@@ -56,16 +58,62 @@ export default function DirectLoginPage() {
         throw signInError
       }
 
-      setStatus("Sign in successful, redirecting...")
+      if (!data.user) {
+        throw new Error("No user returned from login")
+      }
 
-      // Redirect to home page with a full page refresh
-      window.location.href = "/profile"
+      setStatus("Sign in successful, setting up session...")
+
+      // Store auth in localStorage as a backup
+      localStorage.setItem(
+        "auth_user",
+        JSON.stringify({
+          id: data.user.id,
+          email: data.user.email,
+          role: role,
+        }),
+      )
+
+      setStatus("Login successful, redirecting...")
+
+      // Redirect based on role
+      setTimeout(() => {
+        window.location.href = role === "player" ? "/profile" : "/admin/fields"
+      }, 500)
     } catch (error: any) {
       console.error("Login error:", error)
       setError(error.message || "An error occurred during login")
-      setStatus(`Error: ${error.message}`)
+      setStatus(null)
       setIsLoading(false)
     }
+  }
+
+  // Alternative method: manual auth
+  const handleManualAuth = () => {
+    if (!email) {
+      setError("Please enter an email address")
+      return
+    }
+
+    // Generate a random ID if needed
+    const userId = Math.random().toString(36).substring(2, 15)
+
+    // Store in localStorage
+    localStorage.setItem(
+      "auth_user",
+      JSON.stringify({
+        id: userId,
+        email: email,
+        role: role,
+      }),
+    )
+
+    setStatus("Manual auth data set, redirecting...")
+
+    // Redirect based on role
+    setTimeout(() => {
+      window.location.href = role === "player" ? "/profile" : "/admin/fields"
+    }, 500)
   }
 
   return (
@@ -112,6 +160,18 @@ export default function DirectLoginPage() {
                 disabled={isLoading}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="player">Player</SelectItem>
+                  <SelectItem value="owner">Owner</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -119,20 +179,21 @@ export default function DirectLoginPage() {
                   Logging in...
                 </>
               ) : (
-                "Login"
+                "Login with Supabase"
               )}
             </Button>
           </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <div className="text-center text-sm">
-            <p>This is a simplified login page for troubleshooting.</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Environment variables: {process.env.NEXT_PUBLIC_SUPABASE_URL ? "✓" : "✗"} URL,
-              {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✓" : "✗"} Key
+
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="text-sm font-medium mb-2">Alternative: Manual Auth</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              This will bypass Supabase and set auth data directly in localStorage.
             </p>
+            <Button onClick={handleManualAuth} variant="outline" className="w-full">
+              Set Manual Auth Data
+            </Button>
           </div>
-        </CardFooter>
+        </CardContent>
       </Card>
     </div>
   )

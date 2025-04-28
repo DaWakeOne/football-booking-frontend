@@ -5,99 +5,199 @@ import { createClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Loader2, CheckCircle, XCircle } from "lucide-react"
 
 export default function DebugPage() {
-  const [status, setStatus] = useState<string>("Initializing...")
-  const [error, setError] = useState<string | null>(null)
-  const [envVars, setEnvVars] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [supabaseStatus, setSupabaseStatus] = useState<"checking" | "success" | "error">("checking")
+  const [envVarsStatus, setEnvVarsStatus] = useState<"checking" | "success" | "error" | "partial">("checking")
+  const [localStorageAuth, setLocalStorageAuth] = useState<any>(null)
+  const [testResults, setTestResults] = useState<string[]>([])
 
   useEffect(() => {
-    // Check environment variables
-    const vars: Record<string, string> = {}
+    const checkEnvironmentVariables = () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    // Check Supabase environment variables
-    vars["NEXT_PUBLIC_SUPABASE_URL"] = process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Not set"
-    vars["NEXT_PUBLIC_SUPABASE_ANON_KEY"] = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set"
+      if (supabaseUrl && supabaseAnonKey) {
+        setEnvVarsStatus("success")
+        return { success: true, url: supabaseUrl, key: supabaseAnonKey }
+      } else if (supabaseUrl || supabaseAnonKey) {
+        setEnvVarsStatus("partial")
+        return { success: false }
+      } else {
+        setEnvVarsStatus("error")
+        return { success: false }
+      }
+    }
 
-    setEnvVars(vars)
+    const checkLocalStorage = () => {
+      try {
+        const authData = localStorage.getItem("auth_user")
+        if (authData) {
+          const parsed = JSON.parse(authData)
+          setLocalStorageAuth(parsed)
+          return true
+        }
+      } catch (e) {
+        console.error("Error reading localStorage:", e)
+      }
+      return false
+    }
 
-    // Initial status
-    setStatus("Ready to test connection")
-  }, [])
+    const testSupabaseConnection = async () => {
+      setTestResults([...testResults, "Starting Supabase connection test..."])
 
-  const testConnection = async () => {
-    setStatus("Testing Supabase connection...")
-    setError(null)
+      const envCheck = checkEnvironmentVariables()
+      if (!envCheck.success) {
+        setTestResults([...testResults, "❌ Missing environment variables"])
+        setSupabaseStatus("error")
+        return
+      }
 
+      try {
+        setTestResults([...testResults, "✓ Environment variables found"])
+        setTestResults([...testResults, "Creating Supabase client..."])
+
+        const supabase = createClient(envCheck.url, envCheck.key)
+
+        setTestResults([...testResults, "Testing connection with health check..."])
+
+        // Simple query to test connection
+        const { data, error } = await supabase.from("users").select("count").limit(1)
+
+        if (error) {
+          setTestResults([...testResults, `❌ Connection error: ${error.message}`])
+          setSupabaseStatus("error")
+        } else {
+          setTestResults([...testResults, "✓ Supabase connection successful"])
+          setSupabaseStatus("success")
+        }
+      } catch (error: any) {
+        setTestResults([...testResults, `❌ Error: ${error.message}`])
+        setSupabaseStatus("error")
+      }
+    }
+
+    const runTests = async () => {
+      checkLocalStorage()
+      await testSupabaseConnection()
+      setIsLoading(false)
+    }
+
+    runTests()
+  }, [testResults])
+
+  const handleClearLocalStorage = () => {
     try {
-      // Check if Supabase URL and key are available
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        throw new Error("Supabase configuration is missing")
-      }
-
-      // Create Supabase client
-      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
-      setStatus("Checking authentication status...")
-
-      // Test connection by getting session
-      const { data, error } = await supabase.auth.getSession()
-
-      if (error) {
-        throw error
-      }
-
-      setStatus(`Connection successful! ${data.session ? "User is logged in" : "No active session"}`)
-    } catch (err: any) {
-      console.error("Connection test error:", err)
-      setError(err.message || "An unknown error occurred")
-      setStatus("Connection test failed")
+      localStorage.removeItem("auth_user")
+      setLocalStorageAuth(null)
+      window.location.reload()
+    } catch (e) {
+      console.error("Error clearing localStorage:", e)
     }
   }
 
   return (
-    <div className="container py-10">
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Supabase Connection Debug</CardTitle>
-          <CardDescription>Test your Supabase connection and environment variables</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium">Environment Variables</h3>
-            <div className="mt-2 p-4 bg-gray-100 dark:bg-gray-800 rounded">
-              {Object.entries(envVars).map(([key, value]) => (
-                <div key={key} className="flex justify-between py-1 border-b border-gray-200 dark:border-gray-700">
-                  <span className="font-mono text-sm">{key}</span>
-                  <span className={`font-mono text-sm ${value === "Set" ? "text-green-500" : "text-red-500"}`}>
-                    {value}
-                  </span>
-                </div>
-              ))}
+    <div className="container py-8">
+      <h1 className="text-3xl font-bold mb-8 text-center">Connection Diagnostics</h1>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Environment Variables</CardTitle>
+            <CardDescription>Checking for required Supabase configuration</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-2 border rounded mb-2">
+              <span>NEXT_PUBLIC_SUPABASE_URL</span>
+              {envVarsStatus === "checking" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : process.env.NEXT_PUBLIC_SUPABASE_URL ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
+              )}
             </div>
-          </div>
+            <div className="flex items-center justify-between p-2 border rounded">
+              <span>NEXT_PUBLIC_SUPABASE_ANON_KEY</span>
+              {envVarsStatus === "checking" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-          <div>
-            <h3 className="text-lg font-medium">Connection Status</h3>
-            <Alert className="mt-2">
-              <AlertTitle>Status</AlertTitle>
-              <AlertDescription>{status}</AlertDescription>
-            </Alert>
+        <Card>
+          <CardHeader>
+            <CardTitle>Supabase Connection</CardTitle>
+            <CardDescription>Testing connection to Supabase</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-2 border rounded">
+              <span>Connection Status</span>
+              {supabaseStatus === "checking" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : supabaseStatus === "success" ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
+              )}
+            </div>
 
-            {error && (
-              <Alert variant="destructive" className="mt-2">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+            <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded max-h-40 overflow-auto">
+              <pre className="text-xs">
+                {testResults.map((result, i) => (
+                  <div key={i}>{result}</div>
+                ))}
+                {isLoading && <div>Testing...</div>}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Local Storage Auth</CardTitle>
+          <CardDescription>Checking for auth data in localStorage</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {localStorageAuth ? (
+            <>
+              <Alert className="mb-4">
+                <AlertTitle>Auth data found in localStorage</AlertTitle>
+                <AlertDescription>This can be used as a fallback when Supabase authentication fails</AlertDescription>
               </Alert>
-            )}
-          </div>
+              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                <pre className="text-xs overflow-auto">{JSON.stringify(localStorageAuth, null, 2)}</pre>
+              </div>
+            </>
+          ) : (
+            <Alert>
+              <AlertTitle>No auth data in localStorage</AlertTitle>
+              <AlertDescription>No fallback authentication data was found</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
         <CardFooter>
-          <Button onClick={testConnection} className="w-full">
-            Test Supabase Connection
-          </Button>
+          {localStorageAuth && (
+            <Button variant="destructive" onClick={handleClearLocalStorage}>
+              Clear localStorage Auth
+            </Button>
+          )}
         </CardFooter>
       </Card>
+
+      <div className="mt-6 text-center">
+        <Button asChild variant="outline">
+          <a href="/">Return to Home</a>
+        </Button>
+      </div>
     </div>
   )
 }

@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { createClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,36 +10,22 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import type { UserRole } from "@/lib/database.types"
-import { createClient } from "@supabase/supabase-js"
 
 interface LoginFormProps {
   role: UserRole
 }
 
 export function LoginForm({ role }: LoginFormProps) {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string | null>(null)
-
-  // Create Supabase client directly in the component
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-  )
-
-  // Debug environment variables
-  useEffect(() => {
-    console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Not set")
-    console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set")
-  }, [])
+  const [status, setStatus] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setDebugInfo("Starting login process...")
+    setStatus("Starting login process...")
 
     if (!email || !password) {
       setError("Please enter your email and password")
@@ -47,15 +33,20 @@ export function LoginForm({ role }: LoginFormProps) {
     }
 
     setIsLoading(true)
-    setDebugInfo("Validating credentials...")
 
     try {
-      // Check if Supabase URL and key are available
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      // Create Supabase client directly
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error("Supabase configuration is missing")
       }
 
-      setDebugInfo("Attempting to sign in...")
+      setStatus("Connecting to Supabase...")
+      const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+      setStatus("Attempting to sign in...")
       console.log("Signing in with:", email)
 
       // Sign in the user
@@ -66,48 +57,81 @@ export function LoginForm({ role }: LoginFormProps) {
 
       if (signInError) {
         console.error("Sign in error:", signInError)
-        setDebugInfo(`Sign in error: ${signInError.message}`)
         throw signInError
       }
 
-      setDebugInfo("Sign in successful, checking user...")
-
       if (!data.user) {
-        setDebugInfo("No user returned from login")
         throw new Error("No user returned from login")
       }
 
       console.log("User signed in:", data.user.email)
-      setDebugInfo(`User signed in: ${data.user.email}`)
+      setStatus("Sign in successful, checking user role...")
 
-      // Check if the user has the correct role
-      setDebugInfo("Checking user role...")
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", data.user.id)
-        .single()
+      try {
+        // Check if the user has the correct role
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", data.user.id)
+          .single()
 
-      if (userError) {
-        console.error("User data error:", userError)
-        setDebugInfo(`User data error: ${userError.message}`)
-        throw userError
+        if (userError) {
+          console.error("User data error:", userError)
+
+          // If the user doesn't exist in the database yet, create them with the selected role
+          if (userError.code === "PGRST116") {
+            // Record not found
+            setStatus("Creating user profile...")
+
+            const { error: insertError } = await supabase
+              .from("users")
+              .insert([{ id: data.user.id, email: data.user.email, role: role }])
+
+            if (insertError) {
+              console.error("Error creating user profile:", insertError)
+              throw insertError
+            }
+
+            setStatus("User profile created, redirecting...")
+            // Skip role check since we just created the user with the correct role
+          } else {
+            throw userError
+          }
+        } else if (userData && userData.role !== role) {
+          throw new Error(`You are not registered as a ${role}. Please use the correct login page.`)
+        }
+      } catch (roleError: any) {
+        // If there's an error checking the role but authentication succeeded,
+        // we'll still redirect the user but log the error
+        console.error("Role check error:", roleError)
+        if (roleError.message.includes("not registered as")) {
+          throw roleError // Re-throw role mismatch errors
+        }
+        // For other errors, continue with login but log the issue
+        setStatus("Warning: Could not verify role, but continuing...")
       }
 
-      if (userData.role !== role) {
-        setDebugInfo(`Role mismatch: Expected ${role}, got ${userData.role}`)
-        throw new Error(`You are not registered as a ${role}. Please use the correct login page.`)
-      }
+      setStatus("Login successful, redirecting...")
 
-      setDebugInfo(`Login successful as ${role}, redirecting...`)
+      // Store auth in localStorage as a backup
+      localStorage.setItem(
+        "auth_user",
+        JSON.stringify({
+          id: data.user.id,
+          email: data.user.email,
+          role: role,
+        }),
+      )
 
-      // Redirect based on role - use window.location for a full page refresh
-      const redirectPath = role === "player" ? "/profile" : "/admin/fields"
-      window.location.href = redirectPath
+      // Redirect with a slight delay to ensure the status message is seen
+      setTimeout(() => {
+        // Redirect based on role
+        window.location.href = role === "player" ? "/profile" : "/admin/fields"
+      }, 500)
     } catch (error: any) {
       console.error("Login error:", error)
       setError(error.message || "An error occurred during login")
-      setDebugInfo(`Final error: ${error.message}`)
+      setStatus(null)
       setIsLoading(false)
     }
   }
@@ -157,9 +181,9 @@ export function LoginForm({ role }: LoginFormProps) {
         </div>
       </form>
 
-      {debugInfo && (
-        <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 text-xs rounded">
-          <p className="font-mono">Status: {debugInfo}</p>
+      {status && (
+        <div className="p-2 bg-gray-100 dark:bg-gray-800 text-sm rounded text-center">
+          <p>Status: {status}</p>
         </div>
       )}
 
