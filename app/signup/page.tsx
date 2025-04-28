@@ -1,14 +1,13 @@
-import { SignupForm } from "@/components/signup-form"
-
 export default function SignupPage() {
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
-          <p className="text-sm text-muted-foreground">Enter your email below to create your account</p>
-        </div>
-        <SignupForm />
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-4 rounded-lg border p-6 shadow-md">
+        <h1 className="text-2xl font-bold">Sign Up</h1>
+        <p>This page is currently under maintenance.</p>
+        <p>Please check back later or contact support for assistance.</p>
+        <a href="/" className="inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+          Return to Home
+        </a>
       </div>
     </div>
   )

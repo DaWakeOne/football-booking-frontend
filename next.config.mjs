@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Disable static generation
-  staticPageGenerationTimeout: 1000,
+  experimental: {
+    // This will allow us to use the App Router
+    appDir: true,
+  },
   // Ignore build errors
   typescript: {
     ignoreBuildErrors: true,
