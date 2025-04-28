@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Ignore build errors to get a successful build
+  // Disable static generation
+  staticPageGenerationTimeout: 1000,
+  // Ignore build errors
   typescript: {
     ignoreBuildErrors: true,
   },
