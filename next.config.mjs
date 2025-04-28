@@ -1,10 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable static generation
-  experimental: {
-    // This will allow us to use the App Router
-    appDir: true,
-  },
   // Ignore build errors
   typescript: {
     ignoreBuildErrors: true,
@@ -15,7 +10,9 @@ const nextConfig = {
   // Disable image optimization
   images: {
     unoptimized: true,
-  }
+  },
+  // Ensure we have a proper output
+  output: 'standalone',
 }
 
 export default nextConfig
