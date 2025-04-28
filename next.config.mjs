@@ -1,16 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable static generation for authentication pages
-  output: 'standalone',
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Ignore build errors to get a successful build
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Disable image optimization
   images: {
     unoptimized: true,
-  },
+  }
 }
 
 export default nextConfig
