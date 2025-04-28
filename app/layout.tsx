@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ActiModo - Football Field Booking Platform",
+  title: "ActiMido - Football Field Booking Platform",
   description: "Book football fields and connect with players",
     generator: 'v0.dev'
 }

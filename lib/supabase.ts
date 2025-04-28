@@ -8,7 +8,7 @@ export const createBrowserClient = () => {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error("Missing Supabase environment variables")
-    return createClient("https://placeholder.supabase.co", "placeholder-key")
+    throw new Error("Supabase configuration is missing")
   }
 
   return createClient<Database>(supabaseUrl, supabaseAnonKey)
@@ -21,7 +21,7 @@ export const createServerClient = () => {
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error("Missing Supabase environment variables")
-    return createClient("https://placeholder.supabase.co", "placeholder-key")
+    throw new Error("Supabase configuration is missing")
   }
 
   return createClient<Database>(supabaseUrl, supabaseServiceKey, {

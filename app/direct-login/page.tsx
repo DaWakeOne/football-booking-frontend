@@ -1,149 +1,139 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
+import { createClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2, Info } from "lucide-react"
-import type { UserRole } from "@/lib/database.types"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Loader2 } from "lucide-react"
 
 export default function DirectLoginPage() {
   const [email, setEmail] = useState("")
-  const [userId, setUserId] = useState("")
-  const [role, setRole] = useState<UserRole>("player")
+  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<string | null>(null)
 
-  const handleDirectLogin = async () => {
-    if (!email || !userId) {
-      setResult({
-        success: false,
-        error: "Please enter email and user ID",
-      })
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setStatus("Starting login process...")
+
+    if (!email || !password) {
+      setError("Please enter your email and password")
       return
     }
 
     setIsLoading(true)
-    setResult(null)
 
     try {
-      // Create auth data and store in localStorage
-      const authData = {
-        id: userId,
-        email: email,
-        role: role,
+      // Create Supabase client directly
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error("Supabase configuration is missing")
       }
 
-      // Store in localStorage
-      localStorage.setItem("auth_user", JSON.stringify(authData))
+      setStatus(`Connecting to Supabase at ${supabaseUrl.substring(0, 15)}...`)
 
-      setResult({
-        success: true,
-        message: "Auth data stored in localStorage",
-        authData,
+      const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+      setStatus("Attempting to sign in...")
+
+      // Sign in the user
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       })
+
+      if (signInError) {
+        console.error("Sign in error:", signInError)
+        throw signInError
+      }
+
+      setStatus("Sign in successful, redirecting...")
+
+      // Redirect to home page with a full page refresh
+      window.location.href = "/profile"
     } catch (error: any) {
-      setResult({
-        success: false,
-        error: error.message || "An unexpected error occurred",
-        exception: error.toString(),
-      })
-    } finally {
+      console.error("Login error:", error)
+      setError(error.message || "An error occurred during login")
+      setStatus(`Error: ${error.message}`)
       setIsLoading(false)
     }
   }
 
-  const handleRedirect = () => {
-    const redirectUrl = role === "player" ? "/profile" : "/admin/fields"
-    window.location.href = redirectUrl
-  }
-
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Direct Login Tool</h1>
+    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <Card className="mx-auto w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">Direct Login</CardTitle>
+          <CardDescription>Simplified login for troubleshooting</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-      <div className="max-w-md mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Manual Authentication</CardTitle>
-            <CardDescription>This tool will directly set authentication data in localStorage</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          {status && (
+            <Alert className="mb-4">
+              <AlertTitle>Status</AlertTitle>
+              <AlertDescription>{status}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                disabled={isLoading}
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="userId">User ID</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
-                id="userId"
-                type="text"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="Enter your user ID"
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="player">Player</SelectItem>
-                  <SelectItem value="owner">Owner</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={handleDirectLogin} disabled={isLoading} className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Setting Auth Data...
+                  Logging in...
                 </>
               ) : (
-                "Set Auth Data"
+                "Login"
               )}
             </Button>
-          </CardFooter>
-        </Card>
-
-        {result && (
-          <div className="mt-8">
-            <Alert variant={result.success ? "default" : "destructive"}>
-              <Info className="h-4 w-4" />
-              <AlertTitle>{result.success ? "Auth Data Set" : "Error"}</AlertTitle>
-              <AlertDescription>{result.success ? result.message : `Error: ${result.error}`}</AlertDescription>
-            </Alert>
-
-            {result.success && (
-              <div className="mt-4">
-                <Button onClick={handleRedirect} className="w-full">
-                  Go to {role === "player" ? "Profile" : "Admin Dashboard"}
-                </Button>
-              </div>
-            )}
-
-            <div className="mt-4 bg-muted p-4 rounded-md">
-              <h3 className="font-medium mb-2">Auth Data:</h3>
-              <pre className="text-xs overflow-auto max-h-96">{JSON.stringify(result.authData || result, null, 2)}</pre>
-            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-2">
+          <div className="text-center text-sm">
+            <p>This is a simplified login page for troubleshooting.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Environment variables: {process.env.NEXT_PUBLIC_SUPABASE_URL ? "✓" : "✗"} URL,
+              {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✓" : "✗"} Key
+            </p>
           </div>
-        )}
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   )
 }
