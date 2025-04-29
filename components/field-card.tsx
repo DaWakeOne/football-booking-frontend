@@ -1,12 +1,12 @@
 "use client"
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Clock, MapPin } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
 import type { Field } from "@/lib/database.types"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { MapPin, Clock, Phone, Mail } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 interface FieldCardProps {
   field: Field
@@ -54,13 +54,13 @@ export function FieldCard({ field }: FieldCardProps) {
           <div className="mt-2 space-y-1">
             {field.contact_phone && (
               <div className="flex items-center text-sm text-muted-foreground">
-                {/* <Phone className="mr-1 h-4 w-4" /> */}
+                <Phone className="mr-1 h-4 w-4" />
                 <span>{field.contact_phone}</span>
               </div>
             )}
             {field.contact_email && (
               <div className="flex items-center text-sm text-muted-foreground">
-                {/* <Mail className="mr-1 h-4 w-4" /> */}
+                <Mail className="mr-1 h-4 w-4" />
                 <span>{field.contact_email}</span>
               </div>
             )}

@@ -1,117 +1,65 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { createClient } from "@supabase/supabase-js"
-import { FieldCard } from "@/components/field-card"
+import { useState } from "react"
 import type { Field } from "@/lib/database.types"
-import { Skeleton } from "@/components/ui/skeleton"
+import { FieldCard } from "./field-card"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface FieldsListProps {
-  location?: string
-  surfaceType?: string
-  date?: string
-  minPrice?: number
-  maxPrice?: number
+  fields: Field[]
+  itemsPerPage?: number
 }
 
-export function FieldsList({ location, surfaceType, date, minPrice, maxPrice }: FieldsListProps) {
-  const [fields, setFields] = useState<Field[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function FieldsList({ fields, itemsPerPage = 6 }: FieldsListProps) {
+  const [currentPage, setCurrentPage] = useState(1)
 
-  useEffect(() => {
-    async function fetchFields() {
-      setLoading(true)
-      setError(null)
+  const totalPages = Math.ceil(fields.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedFields = fields.slice(startIndex, startIndex + itemsPerPage)
 
-      try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-
-        if (!supabaseUrl || !supabaseAnonKey) {
-          throw new Error("Supabase configuration is missing")
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-        let query = supabase.from("fields").select("*")
-
-        // Apply filters if they exist
-        if (location) {
-          query = query.ilike("location", `%${location}%`)
-        }
-
-        if (surfaceType) {
-          query = query.eq("surface_type", surfaceType)
-        }
-
-        if (minPrice) {
-          query = query.gte("price_per_hour", minPrice)
-        }
-
-        if (maxPrice) {
-          query = query.lte("price_per_hour", maxPrice)
-        }
-
-        // If date is provided, we would need to check availability
-        // This would require a more complex query with bookings table
-
-        const { data, error: fetchError } = await query
-
-        if (fetchError) {
-          throw fetchError
-        }
-
-        setFields(data || [])
-      } catch (err: any) {
-        console.error("Error fetching fields:", err)
-        setError(err.message || "Failed to load fields")
-      } finally {
-        setLoading(false)
-      }
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
     }
-
-    fetchFields()
-  }, [location, surfaceType, date, minPrice, maxPrice])
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="border rounded-lg p-4">
-            <Skeleton className="h-40 w-full mb-4" />
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2 mb-2" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-        ))}
-      </div>
-    )
   }
 
-  if (error) {
-    return (
-      <div className="text-center p-8 border rounded-lg">
-        <h3 className="text-lg font-medium text-red-600">Error loading fields</h3>
-        <p className="text-muted-foreground mt-2">{error}</p>
-      </div>
-    )
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
   }
 
   if (fields.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg">
         <h3 className="text-lg font-medium">No fields found</h3>
-        <p className="text-muted-foreground mt-2">Try adjusting your filters or check back later.</p>
+        <p className="text-muted-foreground mt-2">Try adjusting your filters or search criteria.</p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {fields.map((field) => (
-        <FieldCard key={field.id} field={field} />
-      ))}
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {paginatedFields.map((field) => (
+          <FieldCard key={field.id} field={field} />
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-8 gap-2">
+          <Button variant="outline" size="icon" onClick={goToPreviousPage} disabled={currentPage === 1}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button variant="outline" size="icon" onClick={goToNextPage} disabled={currentPage === totalPages}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
