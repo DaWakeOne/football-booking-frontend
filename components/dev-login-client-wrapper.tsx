@@ -1,18 +1,11 @@
 "use client"
 
 import { Suspense, useState, useEffect } from "react"
-import dynamic from "next/dynamic"
-
-// Dynamically import the DevLoginForm component
-const DevLoginForm = dynamic(
-  () => import("@/components/dev-login-form-wrapper").then((mod) => mod.DevLoginFormWrapper),
-  {
-    loading: () => <div>Loading login form...</div>,
-  },
-)
+import { ClientDevLoginForm } from "@/components/client-dev-login-form"
+import type { UserRole } from "@/lib/database.types"
 
 interface DevLoginClientWrapperProps {
-  role: "player" | "owner"
+  role: UserRole
 }
 
 export function DevLoginClientWrapper({ role }: DevLoginClientWrapperProps) {
@@ -29,7 +22,7 @@ export function DevLoginClientWrapper({ role }: DevLoginClientWrapperProps) {
 
   return (
     <Suspense fallback={<div>Loading login form...</div>}>
-      <DevLoginForm role={role} />
+      <ClientDevLoginForm role={role} />
     </Suspense>
   )
 }

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Wifi, WifiOff } from "lucide-react"
+import { CheckCircle, XCircle } from "lucide-react"
 
 export function NetworkStatus() {
   const [isOnline, setIsOnline] = useState(true)
@@ -38,7 +38,7 @@ export function NetworkStatus() {
 
   return (
     <Alert variant={isOnline ? "default" : "destructive"} className="mb-4 mx-4 mt-4">
-      {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+      {isOnline ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
       <AlertTitle>{isOnline ? "Connection Restored" : "No Internet Connection"}</AlertTitle>
       <AlertDescription>
         {isOnline

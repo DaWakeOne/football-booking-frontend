@@ -1,3 +1,4 @@
+"use client"
 import { SupabaseDiagnostics } from "@/components/supabase-diagnostics"
 import { SimplifiedAuthForm } from "@/components/simplified-auth-form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"

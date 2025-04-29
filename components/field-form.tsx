@@ -1,10 +1,11 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "./auth-provider.tsx"
+import { useAuth } from "./auth-provider"
+import type { Field } from "@/lib/database.types"
+import type React from "react"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,22 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 interface FieldFormProps {
   userId: string
-  field?: {
-    id: string
-    name: string
-    location: string
-    surface_type: string
-    price_per_hour: number
-    open_time: string
-    close_time: string
-    description: string | null
-    image_url: string | null
-    contact_phone?: string | null
-    contact_email?: string | null
-    field_type?: "open" | "closed"
-    field_size?: string | null
-    availability?: Record<string, boolean[]>
-  }
+  field?: Field
 }
 
 const surfaceTypes = ["Natural Grass", "Artificial Turf", "Indoor", "5-a-side", "7-a-side", "11-a-side"]

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function SupabaseError() {
@@ -40,7 +40,7 @@ export function SupabaseError() {
 
   return (
     <Alert variant="destructive" className="mb-4 mx-4 mt-4">
-      <AlertCircle className="h-4 w-4" />
+      <XCircle className="h-4 w-4" />
       <AlertTitle>Configuration Error</AlertTitle>
       <AlertDescription>
         {error}

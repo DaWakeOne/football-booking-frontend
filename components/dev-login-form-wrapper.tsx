@@ -1,9 +1,10 @@
 "use client"
 
 import { DevLoginForm } from "@/components/dev-login-form"
+import type { UserRole } from "@/lib/database.types"
 
 interface DevLoginFormWrapperProps {
-  role: "player" | "owner"
+  role: UserRole
 }
 
 export function DevLoginFormWrapper({ role }: DevLoginFormWrapperProps) {

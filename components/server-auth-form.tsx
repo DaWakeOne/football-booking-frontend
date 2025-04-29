@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import type { UserRole } from "@/lib/database.types"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { serverLogin, serverSignup } from "@/app/actions/server-auth-actions"
 
 interface ServerAuthFormProps {
@@ -162,7 +163,12 @@ export function ServerAuthForm({ mode, role }: ServerAuthFormProps) {
               />
             </div>
           )}
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <Button disabled={isLoading}>
             {isLoading ? (
               <>

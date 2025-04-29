@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,6 +30,7 @@ export function SimplifiedAuthForm({ mode, role }: SimplifiedAuthFormProps) {
   const [signupComplete, setSignupComplete] = useState(false)
   const [loginSuccess, setLoginSuccess] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,9 +112,9 @@ export function SimplifiedAuthForm({ mode, role }: SimplifiedAuthFormProps) {
       // Add a delay before redirecting to ensure localStorage is properly set
       setTimeout(() => {
         if (role === "player") {
-          window.location.href = "/profile"
+          router.push("/profile")
         } else {
-          window.location.href = "/admin/fields"
+          router.push("/admin/fields")
         }
       }, 1000)
     } catch (error: any) {
@@ -144,7 +146,7 @@ export function SimplifiedAuthForm({ mode, role }: SimplifiedAuthFormProps) {
     setTimeout(() => {
       const redirectUrl = role === "player" ? "/profile" : "/admin/fields"
       console.log("Redirecting to:", redirectUrl)
-      window.location.href = redirectUrl
+      router.push(redirectUrl)
     }, 100)
   }
 

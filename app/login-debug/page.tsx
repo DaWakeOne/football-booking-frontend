@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2, Info } from "lucide-react"
+import { Loader2, CheckCircle, XCircle } from "lucide-react"
 import { simplifiedLogin } from "@/app/actions/simplified-auth-actions"
 import type { UserRole } from "@/lib/database.types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -127,7 +127,7 @@ export default function LoginDebugPage() {
         {result && (
           <div className="mt-8">
             <Alert variant={result.success ? "default" : "destructive"}>
-              <Info className="h-4 w-4" />
+              {result.success ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
               <AlertTitle>{result.success ? "Login Successful" : "Login Failed"}</AlertTitle>
               <AlertDescription>
                 {result.success ? `Successfully logged in with user ID: ${result.userId}` : `Error: ${result.error}`}

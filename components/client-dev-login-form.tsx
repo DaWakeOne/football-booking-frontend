@@ -1,5 +1,4 @@
 "use client"
-
 import { DevLoginForm } from "@/components/dev-login-form"
 
 interface ClientDevLoginFormProps {

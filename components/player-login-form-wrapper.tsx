@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { LoginForm } from "./login-form.tsx"
+import { LoginForm } from "@/components/login-form"
 
 export function PlayerLoginFormWrapper() {
   // Use state to ensure component only renders on client
