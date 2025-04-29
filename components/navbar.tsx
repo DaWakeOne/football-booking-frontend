@@ -1,61 +1,53 @@
 "use client"
 
 import Link from "next/link"
-import { useAuth } from "@/components/auth-context"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { MobileNav } from "@/components/mobile-nav"
+import { UserNav } from "@/components/user-nav"
+import { useAuth } from "@/components/auth-context"
 
 export function Navbar() {
   const { user, userRole } = useAuth()
 
   return (
-    <header className="bg-white border-b">
+    <header className="border-b">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="text-xl font-bold">
             ActiModo
           </Link>
           {user && (
-            <nav className="hidden md:flex gap-6">
-              {userRole === "player" && (
+            <nav className="hidden md:flex items-center gap-6">
+              {userRole === "player" ? (
                 <>
-                  <Link href="/fields" className="text-sm font-medium">
+                  <Link href="/fields" className="text-sm font-medium hover:underline">
                     Fields
                   </Link>
-                  <Link href="/bookings" className="text-sm font-medium">
+                  <Link href="/bookings" className="text-sm font-medium hover:underline">
                     My Bookings
                   </Link>
-                  <Link href="/schedule" className="text-sm font-medium">
+                  <Link href="/schedule" className="text-sm font-medium hover:underline">
                     Schedule
                   </Link>
-                  <Link href="/friends" className="text-sm font-medium">
+                  <Link href="/friends" className="text-sm font-medium hover:underline">
                     Friends
                   </Link>
-                  <Link href="/chat" className="text-sm font-medium">
+                  <Link href="/chat" className="text-sm font-medium hover:underline">
                     Chat
                   </Link>
-                  <Link href="/teams" className="text-sm font-medium">
+                  <Link href="/teams" className="text-sm font-medium hover:underline">
                     Teams
                   </Link>
-                  <Link href="/offers" className="text-sm font-medium">
+                  <Link href="/offers" className="text-sm font-medium hover:underline">
                     Offers
                   </Link>
                 </>
-              )}
-              {userRole === "owner" && (
+              ) : (
                 <>
-                  <Link href="/admin/fields" className="text-sm font-medium">
+                  <Link href="/admin/fields" className="text-sm font-medium hover:underline">
                     My Fields
                   </Link>
-                  <Link href="/admin/bookings" className="text-sm font-medium">
+                  <Link href="/admin/bookings" className="text-sm font-medium hover:underline">
                     Bookings
                   </Link>
                 </>
@@ -65,60 +57,18 @@ export function Navbar() {
         </div>
         <div className="flex items-center gap-4">
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{user.email?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
-                </DropdownMenuItem>
-                {userRole === "player" && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href="/bookings">My Bookings</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/schedule">My Schedule</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/friends">Friends</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/chat">Chat</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/teams">Teams</Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {userRole === "owner" && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/fields">My Fields</Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/logout">Logout</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserNav />
           ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
+            <div className="hidden md:flex gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/login/player">Player Login</Link>
               </Button>
-              <Button asChild>
-                <Link href="/signup">Sign Up</Link>
+              <Button asChild size="sm">
+                <Link href="/login/owner">Owner Login</Link>
               </Button>
             </div>
           )}
+          <MobileNav />
         </div>
       </div>
     </header>

@@ -1,69 +1,58 @@
 "use client"
 
-import { usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/components/auth-context"
 import Link from "next/link"
-import { User, MessageSquare, Users, UserPlus, Calendar } from "lucide-react"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar"
 
 export function PlayerRightSidebar() {
-  const pathname = usePathname()
-
-  const menuItems = [
-    {
-      title: "Personal Information",
-      href: "/profile",
-      icon: User,
-    },
-    {
-      title: "Chat",
-      href: "/chat",
-      icon: MessageSquare,
-    },
-    {
-      title: "Friends",
-      href: "/friends",
-      icon: UserPlus,
-    },
-    {
-      title: "Teams",
-      href: "/teams",
-      icon: Users,
-    },
-    {
-      title: "Schedule",
-      href: "/schedule",
-      icon: Calendar,
-    },
-  ]
+  const { user } = useAuth()
 
   return (
-    <Sidebar side="right" variant="inset" collapsible="icon">
-      <SidebarHeader className="border-b">
-        <div className="p-2 text-center font-semibold">Player Tools</div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.title}>
-                <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Common tasks and shortcuts</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Button asChild className="w-full justify-start" variant="ghost">
+            <Link href="/fields">
+              <span>Find a Field</span>
+            </Link>
+          </Button>
+          <Button asChild className="w-full justify-start" variant="ghost">
+            <Link href="/schedule">
+              <span>Update Schedule</span>
+            </Link>
+          </Button>
+          <Button asChild className="w-full justify-start" variant="ghost">
+            <Link href="/friends">
+              <span>Add Friends</span>
+            </Link>
+          </Button>
+        </CardContent>
+        <CardFooter>
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link href="/profile">View Profile</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Upcoming Bookings</CardTitle>
+          <CardDescription>Your next scheduled games</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No upcoming bookings</p>
+        </CardContent>
+        <CardFooter>
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link href="/bookings">View All Bookings</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }

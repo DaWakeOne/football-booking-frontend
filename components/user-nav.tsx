@@ -1,39 +1,35 @@
 "use client"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/components/auth-context"
+import Link from "next/link"
 
-interface UserNavProps {
-  user: {
-    email: string
-    role: string
-  } | null
-}
+export function UserNav() {
+  const { user, userRole, signOut } = useAuth()
 
-export function UserNav({ user }: UserNavProps) {
-  const handleSignOut = () => {
-    // Redirect to logout page
-    window.location.href = "/logout"
+  if (!user) {
+    return null
   }
 
-  if (!user) return null
-
-  const initials = user.email ? user.email.substring(0, 2).toUpperCase() : "U"
+  const userInitials = user.email ? user.email.substring(0, 2).toUpperCase() : "U"
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarFallback>{initials}</AvatarFallback>
+            <AvatarImage src="/placeholder.svg" alt={user.email || "User"} />
+            <AvatarFallback>{userInitials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -41,39 +37,44 @@ export function UserNav({ user }: UserNavProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.email}</p>
-            <p className="text-xs text-muted-foreground">{user.role === "player" ? "Player" : "Field Owner"}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {userRole === "player" ? "Player Account" : "Owner Account"}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <a href="/profile">Profile</a>
-        </DropdownMenuItem>
-        {user.role === "player" && (
-          <>
-            <DropdownMenuItem asChild>
-              <a href="/bookings">My Bookings</a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="/friends">Friends</a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="/chat">Chat</a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="/teams">Teams</a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="/schedule">Schedule</a>
-            </DropdownMenuItem>
-          </>
-        )}
-        {user.role === "owner" && (
-          <DropdownMenuItem asChild>
-            <a href="/admin/fields">Manage Fields</a>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuGroup>
+          {userRole === "player" ? (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/bookings">Bookings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/schedule">Schedule</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/friends">Friends</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/teams">Teams</Link>
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/fields">My Fields</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/bookings">Bookings</Link>
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>Log out</DropdownMenuItem>
+        <DropdownMenuItem onClick={signOut}>Log out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
