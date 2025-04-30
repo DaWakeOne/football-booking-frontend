@@ -2,87 +2,47 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
-import { isAuthenticated, getUserRole, getAuthData } from "@/lib/auth-utils"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-context"
 import { Loader2 } from "lucide-react"
-import Link from "next/link"
 import type { UserRole } from "@/lib/database.types"
 
 interface AuthCheckProps {
   children: React.ReactNode
   requiredRole?: UserRole
-  fallback?: React.ReactNode
+  redirectTo?: string
 }
 
-export function AuthCheck({ children, requiredRole, fallback }: AuthCheckProps) {
-  const [isChecking, setIsChecking] = useState(true)
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [authData, setAuthData] = useState<any>(null)
+export function AuthCheck({ children, requiredRole, redirectTo = "/login" }: AuthCheckProps) {
+  const { user, isLoading, userRole } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
-    // Check authentication status
-    const checkAuth = () => {
-      const authenticated = isAuthenticated()
-      const userRole = getUserRole()
-      const userData = getAuthData()
-
-      setAuthData(userData)
-
-      // If no role is required, just check if authenticated
-      if (!requiredRole) {
-        setIsAuthorized(authenticated)
-      } else {
-        // Check if user has the required role
-        setIsAuthorized(authenticated && userRole === requiredRole)
-      }
-
-      setIsChecking(false)
+    if (!isLoading && !user) {
+      router.push(redirectTo)
+    } else if (!isLoading && user && requiredRole && userRole !== requiredRole) {
+      router.push("/unauthorized")
     }
+  }, [user, isLoading, router, redirectTo, requiredRole, userRole])
 
-    checkAuth()
-
-    // Also check when the component is focused
-    window.addEventListener("focus", checkAuth)
-
-    return () => {
-      window.removeEventListener("focus", checkAuth)
-    }
-  }, [requiredRole])
-
-  if (isChecking) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading...</p>
+        </div>
       </div>
     )
   }
 
-  if (!isAuthorized) {
-    if (fallback) {
-      return <>{fallback}</>
-    }
+  if (!user) {
+    return null
+  }
 
-    return (
-      <Alert variant="destructive" className="my-4">
-        <AlertTitle>Authentication Required</AlertTitle>
-        <AlertDescription>
-          <p className="mb-4">You need to be logged in to access this page.</p>
-          <div className="flex gap-2">
-            <Button asChild>
-              <Link href="/login/player">Player Login</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/login/owner">Owner Login</Link>
-            </Button>
-          </div>
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
-            <pre>{JSON.stringify(authData, null, 2)}</pre>
-          </div>
-        </AlertDescription>
-      </Alert>
-    )
+  if (requiredRole && userRole !== requiredRole) {
+    return null
   }
 
   return <>{children}</>

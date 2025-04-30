@@ -11,70 +11,46 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useAuth } from "@/components/auth-context"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
-export function UserNav() {
-  const { user, userRole, signOut } = useAuth()
+export function UserNav({ user }: { user: { name: string; email: string; role: string } }) {
+  const router = useRouter()
+  const initials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
 
-  if (!user) {
-    return null
+  const handleLogout = () => {
+    // Handle logout logic here
+    router.push("/logout")
   }
-
-  const userInitials = user.email ? user.email.substring(0, 2).toUpperCase() : "U"
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder.svg" alt={user.email || "User"} />
-            <AvatarFallback>{userInitials}</AvatarFallback>
+            <AvatarImage src="/placeholder.svg" alt={user.name} />
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.email}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {userRole === "player" ? "Player Account" : "Owner Account"}
-            </p>
+            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {userRole === "player" ? (
-            <>
-              <DropdownMenuItem asChild>
-                <Link href="/profile">Profile</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/bookings">Bookings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/schedule">Schedule</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/friends">Friends</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/teams">Teams</Link>
-              </DropdownMenuItem>
-            </>
-          ) : (
-            <>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/fields">My Fields</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/bookings">Bookings</Link>
-              </DropdownMenuItem>
-            </>
-          )}
+          <DropdownMenuItem onClick={() => router.push("/profile")}>Profile</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/bookings")}>My Bookings</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/settings")}>Settings</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut}>Log out</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

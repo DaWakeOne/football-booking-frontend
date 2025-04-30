@@ -123,4 +123,4 @@ export interface Database {
 
 export type Field = Database["public"]["Tables"]["fields"]["Row"]
 export type NewBooking = Database["public"]["Tables"]["bookings"]["Insert"]
-export type UserRole = "player" | "owner"
+export type UserRole = "player" | "owner" | "admin"

@@ -1,12 +1,9 @@
 "use client"
 
 import type { ReactNode } from "react"
+import { AuthCheck } from "@/components/auth-check"
 import { PlayerLeftSidebar } from "@/components/player-left-sidebar"
 import { PlayerRightSidebar } from "@/components/player-right-sidebar"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { MobileNav } from "@/components/mobile-nav"
-import { AuthRequired } from "@/components/auth-required"
 
 interface PlayerLayoutWrapperProps {
   children: ReactNode
@@ -14,27 +11,12 @@ interface PlayerLayoutWrapperProps {
 
 export function PlayerLayoutWrapper({ children }: PlayerLayoutWrapperProps) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <MobileNav />
-
-      <AuthRequired requiredRole="player" />
-
-      <div className="flex-1 container py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="hidden lg:block lg:col-span-2">
-            <PlayerLeftSidebar />
-          </div>
-
-          <main className="lg:col-span-8">{children}</main>
-
-          <div className="hidden lg:block lg:col-span-2">
-            <PlayerRightSidebar />
-          </div>
-        </div>
+    <AuthCheck requiredRole="player">
+      <div className="flex min-h-screen">
+        <PlayerLeftSidebar />
+        <main className="flex-1 p-6 bg-gray-50">{children}</main>
+        <PlayerRightSidebar />
       </div>
-
-      <Footer />
-    </div>
+    </AuthCheck>
   )
 }

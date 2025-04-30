@@ -1,7 +1,7 @@
-import { PlayerLayoutWrapper } from "@/components/player-layout-wrapper"
-;("use client")
+"use client"
 
 import { useState } from "react"
+import { PlayerLayoutWrapper } from "@/components/player-layout-wrapper"
 import { AuthCheck } from "@/components/auth-check"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

@@ -1,75 +1,59 @@
 "use client"
 
-import type { Field } from "@/lib/database.types"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { MapPin, Clock, Phone, Mail } from "lucide-react"
-import Link from "next/link"
 import Image from "next/image"
+import Link from "next/link"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { MapPin, Clock, Star } from "lucide-react"
+import type { Field } from "@/lib/database.types"
 
 interface FieldCardProps {
   field: Field
 }
 
 export function FieldCard({ field }: FieldCardProps) {
+  // Handle potentially undefined properties with default values
+  const name = field?.name || "Unnamed Field"
+  const location = field?.location || "Location not specified"
+  const price_per_hour = field?.price_per_hour || 0
+  const surface_type = field?.surface_type || "Not specified"
+  const rating = field?.rating || 0
+  const id = field?.id || "unknown"
+
   return (
     <Card className="overflow-hidden">
-      <div className="relative h-48 w-full">
+      <div className="relative h-48">
         <Image
-          src={field.image_url || "/placeholder.svg?height=200&width=400"}
-          alt={field.name}
+          src={field?.image_url || "/placeholder.svg?height=200&width=400&query=football+field"}
+          alt={name}
           fill
           className="object-cover"
         />
+        <Badge className="absolute top-2 right-2 bg-white text-black">{surface_type}</Badge>
       </div>
-      <CardHeader className="p-4">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl">{field.name}</CardTitle>
-          <div className="flex flex-col gap-1">
-            <Badge>{field.surface_type}</Badge>
-            <Badge variant="outline">{field.field_type === "open" ? "Open Field" : "Closed Field"}</Badge>
-          </div>
+      <CardContent className="p-4">
+        <h3 className="text-lg font-bold mb-2">{name}</h3>
+        <div className="flex items-center text-sm text-muted-foreground mb-2">
+          <MapPin className="h-4 w-4 mr-1" />
+          <span>{location}</span>
         </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <MapPin className="mr-1 h-4 w-4" />
-          <span>{field.location}</span>
+        <div className="flex items-center text-sm text-muted-foreground mb-2">
+          <Clock className="h-4 w-4 mr-1" />
+          <span>Available 8:00 AM - 10:00 PM</span>
         </div>
-        {field.field_size && (
-          <div className="flex items-center text-sm text-muted-foreground mt-1">
-            <span>Size: {field.field_size}</span>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className="flex items-center text-sm">
-          <Clock className="mr-1 h-4 w-4" />
-          <span>
-            {field.open_time.substring(0, 5)} - {field.close_time.substring(0, 5)}
-          </span>
+        <div className="flex items-center text-sm mb-2">
+          <Star className="h-4 w-4 mr-1 text-yellow-500" />
+          <span>{rating.toFixed(1)} (23 reviews)</span>
         </div>
-        <p className="mt-2 text-lg font-semibold">${field.price_per_hour}/hour</p>
-
-        {(field.contact_phone || field.contact_email) && (
-          <div className="mt-2 space-y-1">
-            {field.contact_phone && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Phone className="mr-1 h-4 w-4" />
-                <span>{field.contact_phone}</span>
-              </div>
-            )}
-            {field.contact_email && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Mail className="mr-1 h-4 w-4" />
-                <span>{field.contact_email}</span>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="text-lg font-bold mt-2">${price_per_hour}/hour</div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full">
-          <Link href={`/fields/${field.id}`}>View Details</Link>
+      <CardFooter className="p-4 pt-0 flex justify-between">
+        <Button variant="outline" asChild>
+          <Link href={`/fields/${id}`}>View Details</Link>
+        </Button>
+        <Button asChild>
+          <Link href={`/fields/${id}/book`}>Book Now</Link>
         </Button>
       </CardFooter>
     </Card>

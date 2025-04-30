@@ -11,11 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Search, Filter, X } from "lucide-react"
 
-interface FieldsFilterProps {
-  onFilterChange: (filters: any) => void
-}
-
-export function FieldsFilter({ onFilterChange }: FieldsFilterProps) {
+export function FieldsFilter() {
   const [filters, setFilters] = useState({
     search: "",
     priceRange: [0, 100],
@@ -34,43 +30,35 @@ export function FieldsFilter({ onFilterChange }: FieldsFilterProps) {
   })
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFilters = { ...filters, search: e.target.value }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    setFilters({ ...filters, search: e.target.value })
   }
 
   const handlePriceChange = (value: number[]) => {
-    const newFilters = { ...filters, priceRange: value }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    setFilters({ ...filters, priceRange: value })
   }
 
   const handleSurfaceTypeChange = (type: string, checked: boolean) => {
-    const newFilters = {
+    setFilters({
       ...filters,
       surfaceTypes: {
         ...filters.surfaceTypes,
         [type]: checked,
       },
-    }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    })
   }
 
   const handleFieldTypeChange = (type: string, checked: boolean) => {
-    const newFilters = {
+    setFilters({
       ...filters,
       fieldTypes: {
         ...filters.fieldTypes,
         [type]: checked,
       },
-    }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    })
   }
 
   const resetFilters = () => {
-    const resetFilters = {
+    setFilters({
       search: "",
       priceRange: [0, 100],
       surfaceTypes: {
@@ -85,9 +73,7 @@ export function FieldsFilter({ onFilterChange }: FieldsFilterProps) {
         open: false,
         closed: false,
       },
-    }
-    setFilters(resetFilters)
-    onFilterChange(resetFilters)
+    })
   }
 
   const hasActiveFilters = () => {

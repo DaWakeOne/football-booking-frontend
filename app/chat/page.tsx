@@ -1,3 +1,5 @@
+"use client"
+
 import { PlayerLayoutWrapper } from "@/components/player-layout-wrapper"
 
 export default function ChatPage() {

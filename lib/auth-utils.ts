@@ -53,3 +53,32 @@ export function getUserId(): string | null {
     return null
   }
 }
+
+// Add the missing exports
+export function getAuthData() {
+  try {
+    const authData = localStorage.getItem("auth_user")
+    if (authData) {
+      return JSON.parse(authData)
+    }
+    return null
+  } catch (e) {
+    console.error("Error getting auth data:", e)
+    return null
+  }
+}
+
+export function loginUser(userData: {
+  id: string
+  email: string
+  role: UserRole
+  name?: string
+}) {
+  try {
+    localStorage.setItem("auth_user", JSON.stringify(userData))
+    return true
+  } catch (e) {
+    console.error("Error logging in user:", e)
+    return false
+  }
+}

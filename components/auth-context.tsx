@@ -1,210 +1,131 @@
 "use client"
 
 import type React from "react"
+
 import { createContext, useContext, useEffect, useState } from "react"
 import { createClient } from "@supabase/supabase-js"
-import type { Session, User } from "@supabase/supabase-js"
+import type { User } from "@supabase/supabase-js"
 import type { UserRole } from "@/lib/database.types"
 
 type AuthContextType = {
   user: User | null
-  session: Session | null
   userRole: UserRole | null
   isLoading: boolean
   supabase: ReturnType<typeof createClient>
   signOut: () => Promise<void>
 }
 
-// Create a fake user object from localStorage data
-function createFakeUserFromLocalStorage(data: any): User {
-  return {
-    id: data.id || "manual-user",
-    email: data.email || "user@example.com",
-    app_metadata: {},
-    user_metadata: {},
-    aud: "authenticated",
-    created_at: new Date().toISOString(),
-  } as User
-}
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Create Supabase client directly
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-  const [supabase] = useState(() => createClient(supabaseUrl, supabaseAnonKey))
-
   const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-
-  // Check for localStorage auth as a fallback
-  const checkLocalAuth = () => {
-    try {
-      const localAuth = localStorage.getItem("auth_user")
-      if (localAuth) {
-        const authData = JSON.parse(localAuth)
-        if (authData && authData.role) {
-          console.log("Using localStorage auth data")
-          setUserRole(authData.role as UserRole)
-
-          // Create a fake user object if we don't have one
-          if (!user) {
-            setUser(createFakeUserFromLocalStorage(authData))
-          }
-
-          return true
-        }
-      }
-    } catch (e) {
-      console.error("Error reading localStorage auth:", e)
-    }
-    return false
-  }
+  const [supabaseClient] = useState(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+    return createClient(supabaseUrl, supabaseAnonKey)
+  })
 
   useEffect(() => {
-    const initAuth = async () => {
+    const initializeAuth = async () => {
+      setIsLoading(true)
+
       try {
-        setIsLoading(true)
+        // First, try to get the session from Supabase
+        const { data: sessionData } = await supabaseClient.auth.getSession()
 
-        // First check localStorage - prioritize it
-        if (checkLocalAuth()) {
-          setIsLoading(false)
-          return
-        }
+        // If we have a session, use it
+        if (sessionData?.session?.user) {
+          setUser(sessionData.session.user)
 
-        // If no localStorage auth, try Supabase
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+          // Fetch user role from the database
+          const { data: userData, error: userError } = await supabaseClient
+            .from("users")
+            .select("role")
+            .eq("id", sessionData.session.user.id)
+            .single()
 
-        if (session?.user) {
-          setSession(session)
-          setUser(session.user)
+          if (userData) {
+            setUserRole(userData.role as UserRole)
+          } else {
+            console.error("User role not found:", userError)
 
-          try {
-            // Get user role
-            const { data, error } = await supabase.from("users").select("role").eq("id", session.user.id).single()
-
-            if (error) {
-              console.error("Error fetching user role:", error)
-              checkLocalAuth()
-            } else if (data) {
-              setUserRole(data.role as UserRole)
-
-              // Update localStorage with the latest data
-              localStorage.setItem(
-                "auth_user",
-                JSON.stringify({
-                  id: session.user.id,
-                  email: session.user.email,
-                  role: data.role,
-                }),
-              )
+            // Fallback to localStorage for role if available
+            const storedRole = localStorage.getItem("userRole")
+            if (storedRole) {
+              setUserRole(storedRole as UserRole)
             }
-          } catch (error) {
-            console.error("Error in role fetch:", error)
-            checkLocalAuth()
           }
         } else {
-          // No session, check localStorage as fallback
-          checkLocalAuth()
+          // If no session, check localStorage as fallback
+          const storedUser = localStorage.getItem("user")
+          const storedRole = localStorage.getItem("userRole")
+
+          if (storedUser) {
+            try {
+              setUser(JSON.parse(storedUser))
+              if (storedRole) {
+                setUserRole(storedRole as UserRole)
+              }
+            } catch (e) {
+              console.error("Error parsing stored user:", e)
+              localStorage.removeItem("user")
+              localStorage.removeItem("userRole")
+            }
+          } else {
+            setUser(null)
+            setUserRole(null)
+          }
         }
       } catch (error) {
-        console.error("Error initializing auth:", error)
-        // Fall back to localStorage if available
-        checkLocalAuth()
+        console.error("Auth initialization error:", error)
+        setUser(null)
+        setUserRole(null)
       } finally {
         setIsLoading(false)
       }
     }
 
-    initAuth()
+    initializeAuth()
 
-    // Set up auth state change listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email)
-
+    const { data: authListener } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setSession(session)
         setUser(session.user)
 
-        try {
-          // Get user role
-          const { data, error } = await supabase.from("users").select("role").eq("id", session.user.id).single()
+        // Store user in localStorage as fallback
+        localStorage.setItem("user", JSON.stringify(session.user))
 
-          if (error) {
-            console.error("Error fetching user role on auth change:", error)
-            checkLocalAuth()
-          } else if (data) {
-            setUserRole(data.role as UserRole)
+        // Fetch user role from the database
+        const { data: userData } = await supabaseClient.from("users").select("role").eq("id", session.user.id).single()
 
-            // Update localStorage with the latest data
-            localStorage.setItem(
-              "auth_user",
-              JSON.stringify({
-                id: session.user.id,
-                email: session.user.email,
-                role: data.role,
-              }),
-            )
-          }
-        } catch (error) {
-          console.error("Error in role fetch on auth change:", error)
-          checkLocalAuth()
+        if (userData) {
+          setUserRole(userData.role as UserRole)
+          localStorage.setItem("userRole", userData.role)
         }
       } else {
-        // No session, check localStorage as fallback
-        if (!checkLocalAuth()) {
-          setUser(null)
-          setSession(null)
-          setUserRole(null)
-        }
+        setUser(null)
+        setUserRole(null)
+        localStorage.removeItem("user")
+        localStorage.removeItem("userRole")
       }
-
-      setIsLoading(false)
     })
 
     return () => {
-      subscription.unsubscribe()
+      authListener.subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [supabaseClient])
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut()
-    } catch (error) {
-      console.error("Error signing out:", error)
-    }
-
-    // Clear localStorage auth
-    try {
-      localStorage.removeItem("auth_user")
-    } catch (e) {
-      console.error("Error clearing localStorage:", e)
-    }
-
+    await supabaseClient.auth.signOut()
+    localStorage.removeItem("user")
+    localStorage.removeItem("userRole")
     setUser(null)
-    setSession(null)
     setUserRole(null)
-    window.location.href = "/"
   }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        userRole,
-        isLoading,
-        supabase,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{ user, userRole, isLoading, supabase: supabaseClient, signOut }}>
       {children}
     </AuthContext.Provider>
   )

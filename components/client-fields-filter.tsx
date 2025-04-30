@@ -11,5 +11,5 @@ export function ClientFieldsFilter() {
     // In a real app, we would filter the fields based on these filters
   }
 
-  return <FieldsFilter onFilterChange={handleFilterChange} />
+  return <FieldsFilter />
 }
