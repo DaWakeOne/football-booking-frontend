@@ -3,8 +3,8 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import type { Session, User } from "@supabase/supabase-js"
 import { createBrowserClient } from "@/lib/supabase"
+import type { Session, User } from "@supabase/supabase-js"
 import type { UserRole } from "@/lib/database.types"
 import { createUserProfile } from "@/app/actions/user-actions"
 
@@ -22,12 +22,20 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [supabase] = useState(() => createBrowserClient())
+  const [supabase, setSupabase] = useState(() => {
+    try {
+      return createBrowserClient()
+    } catch (err) {
+      console.error("Failed to create Supabase client:", err)
+      return null as any // We'll handle this case below
+    }
+  })
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [connectionAttempts, setConnectionAttempts] = useState(0)
 
   const ensureUserInDatabase = async () => {
     if (!user || !user.email) return false
@@ -101,6 +109,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Update the first useEffect in the AuthProvider
   useEffect(() => {
+    // If we couldn't create the Supabase client, try again or use localStorage
+    if (!supabase) {
+      if (connectionAttempts < 3) {
+        console.log("Retrying Supabase client creation...", connectionAttempts + 1)
+        setConnectionAttempts((prev) => prev + 1)
+        try {
+          setSupabase(createBrowserClient())
+        } catch (err) {
+          console.error("Failed to create Supabase client again:", err)
+        }
+      } else {
+        console.log("Using localStorage auth as fallback due to Supabase connection issues")
+        checkLocalStorageAuth()
+        setIsLoading(false)
+      }
+      return
+    }
+
     const getSession = async () => {
       try {
         console.log("AuthProvider: Initializing auth state...")
@@ -122,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (sessionError) {
           console.error("Session error:", sessionError)
+          setError(sessionError.message)
           setIsLoading(false)
           return
         }
@@ -141,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (userError && userError.code !== "PGRST116") {
             console.error("Error fetching user role:", userError)
+            setError(userError.message)
           }
 
           if (data) {
@@ -186,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (error && error.code !== "PGRST116") {
               console.error("Error fetching user role on auth change:", error)
+              setError(error.message)
             }
 
             if (data) {
@@ -228,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
       return () => {}
     }
-  }, [supabase])
+  }, [supabase, connectionAttempts])
 
   return (
     <AuthContext.Provider

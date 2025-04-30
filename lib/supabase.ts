@@ -11,7 +11,12 @@ export const createBrowserClient = () => {
     throw new Error("Supabase configuration is missing")
   }
 
-  return createClient<Database>(supabaseUrl, supabaseAnonKey)
+  try {
+    return createClient<Database>(supabaseUrl, supabaseAnonKey)
+  } catch (error) {
+    console.error("Error creating Supabase client:", error)
+    throw new Error("Failed to initialize Supabase client")
+  }
 }
 
 // Create a supabase client for server components
@@ -24,9 +29,14 @@ export const createServerClient = () => {
     throw new Error("Supabase configuration is missing")
   }
 
-  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      persistSession: false,
-    },
-  })
+  try {
+    return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+      },
+    })
+  } catch (error) {
+    console.error("Error creating Supabase server client:", error)
+    throw new Error("Failed to initialize Supabase server client")
+  }
 }

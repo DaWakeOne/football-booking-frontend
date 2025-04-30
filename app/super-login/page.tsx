@@ -1,16 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 import Link from "next/link"
 import type { UserRole } from "@/lib/database.types"
 
 export default function SuperLoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState("user@example.com")
   const [role, setRole] = useState<UserRole>("player")
   const [success, setSuccess] = useState(false)
@@ -31,9 +35,19 @@ export default function SuperLoginPage() {
 
     setSuccess(true)
 
+    toast({
+      title: "Login successful",
+      description: "You will be redirected shortly.",
+    })
+
     // Redirect after a short delay
     setTimeout(() => {
-      window.location.href = role === "player" ? "/fields" : "/admin/fields"
+      if (role === "player") {
+        router.push("/fields")
+      } else {
+        router.push("/admin/fields")
+      }
+      router.refresh()
     }, 1000)
   }
 
@@ -89,6 +103,7 @@ export default function SuperLoginPage() {
           </Link>
         </CardFooter>
       </Card>
+      <Toaster />
     </div>
   )
 }
