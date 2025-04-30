@@ -73,12 +73,22 @@ export function loginUser(userData: {
   email: string
   role: UserRole
   name?: string
-}) {
+}): boolean {
   try {
+    console.log("Storing auth data in localStorage:", userData)
     localStorage.setItem("auth_user", JSON.stringify(userData))
     return true
   } catch (e) {
     console.error("Error logging in user:", e)
     return false
   }
+}
+
+// Overload for backward compatibility
+export function loginUserLegacy(email: string, role: UserRole): boolean {
+  return loginUser({
+    id: `manual-${Date.now()}`,
+    email,
+    role,
+  })
 }

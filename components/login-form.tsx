@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,12 +19,12 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ role }: LoginFormProps) {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [connectionError, setConnectionError] = useState<boolean>(false)
+  const [redirecting, setRedirecting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,51 +104,36 @@ export function LoginForm({ role }: LoginFormProps) {
           }),
         )
       } else {
-        // If no user record exists, create one
-        const createUserResponse = await fetch("/api/create-user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        // If no user record exists, create one with the provided role
+        localStorage.setItem(
+          "auth_user",
+          JSON.stringify({
             id: data.user.id,
             email: data.user.email,
             role: role,
           }),
-        })
-
-        if (!createUserResponse.ok) {
-          console.error("Failed to create user record")
-          // Still store auth info in localStorage
-          localStorage.setItem(
-            "auth_user",
-            JSON.stringify({
-              id: data.user.id,
-              email: data.user.email,
-              role: role,
-            }),
-          )
-        }
+        )
       }
+
+      setRedirecting(true)
 
       toast({
         title: "Login successful",
         description: "You will be redirected shortly.",
       })
 
-      // Redirect based on role
+      // Use direct window.location for more reliable redirection
+      const redirectPath = role === "player" ? "/profile" : "/admin/fields"
+      console.log("Redirecting to:", redirectPath)
+
+      // Add a slightly longer delay to ensure localStorage is set and toast is shown
       setTimeout(() => {
-        if (role === "player") {
-          router.push("/profile")
-        } else {
-          router.push("/admin/fields")
-        }
-        router.refresh()
-      }, 1000)
+        // Use window.location.href for more reliable redirection
+        window.location.href = redirectPath
+      }, 1500)
     } catch (error: any) {
       console.error("Login error:", error)
       setError(error.message || "An error occurred during login")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -168,20 +152,22 @@ export function LoginForm({ role }: LoginFormProps) {
       }),
     )
 
+    setRedirecting(true)
+
     toast({
       title: "Super login successful",
       description: "You will be redirected shortly.",
     })
 
-    // Redirect after a short delay
+    // Use direct window.location for more reliable redirection
+    const redirectPath = role === "player" ? "/profile" : "/admin/fields"
+    console.log("Redirecting to:", redirectPath)
+
+    // Add a slightly longer delay to ensure localStorage is set and toast is shown
     setTimeout(() => {
-      if (role === "player") {
-        router.push("/profile")
-      } else {
-        router.push("/admin/fields")
-      }
-      router.refresh()
-    }, 1000)
+      // Use window.location.href for more reliable redirection
+      window.location.href = redirectPath
+    }, 1500)
   }
 
   return (
@@ -196,7 +182,7 @@ export function LoginForm({ role }: LoginFormProps) {
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
+              disabled={isLoading || redirecting}
             />
           </div>
           <div className="grid gap-2">
@@ -206,29 +192,44 @@ export function LoginForm({ role }: LoginFormProps) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
+              disabled={isLoading || redirecting}
             />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
+
+          {redirecting && (
+            <Alert className="mt-4">
+              <AlertTitle>Login successful!</AlertTitle>
+              <AlertDescription>Redirecting you to your dashboard...</AlertDescription>
+            </Alert>
+          )}
 
           {connectionError && (
             <Alert variant="destructive" className="mt-4">
               <AlertTitle>Connection Error</AlertTitle>
               <AlertDescription>
                 <p className="mb-2">Could not connect to the authentication service.</p>
-                <Button variant="outline" size="sm" className="w-full mt-2" onClick={handleSuperLogin}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={handleSuperLogin}
+                  disabled={redirecting}
+                >
                   Use Super Login Instead
                 </Button>
               </AlertDescription>
             </Alert>
           )}
 
-          <Button disabled={isLoading}>
+          <Button disabled={isLoading || redirecting}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Logging in...
               </>
+            ) : redirecting ? (
+              "Redirecting..."
             ) : (
               "Login"
             )}

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,10 +13,10 @@ import Link from "next/link"
 import type { UserRole } from "@/lib/database.types"
 
 export default function SuperLoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState("user@example.com")
   const [role, setRole] = useState<UserRole>("player")
   const [success, setSuccess] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
 
   const handleLogin = () => {
     // Create a fake user ID
@@ -34,21 +33,22 @@ export default function SuperLoginPage() {
     )
 
     setSuccess(true)
+    setRedirecting(true)
 
     toast({
       title: "Login successful",
       description: "You will be redirected shortly.",
     })
 
-    // Redirect after a short delay
+    // Use direct window.location for more reliable redirection
+    const redirectPath = role === "player" ? "/fields" : "/admin/fields"
+    console.log("Redirecting to:", redirectPath)
+
+    // Add a slightly longer delay to ensure localStorage is set and toast is shown
     setTimeout(() => {
-      if (role === "player") {
-        router.push("/fields")
-      } else {
-        router.push("/admin/fields")
-      }
-      router.refresh()
-    }, 1000)
+      // Use window.location.href for more reliable redirection
+      window.location.href = redirectPath
+    }, 1500)
   }
 
   return (
@@ -62,7 +62,9 @@ export default function SuperLoginPage() {
           {success && (
             <Alert className="mb-4">
               <AlertTitle>Login successful!</AlertTitle>
-              <AlertDescription>Redirecting you to your dashboard...</AlertDescription>
+              <AlertDescription>
+                {redirecting ? "Redirecting you to your dashboard..." : "Please wait..."}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -74,6 +76,7 @@ export default function SuperLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email"
+              disabled={redirecting}
             />
             <p className="text-xs text-muted-foreground">
               This is just for display purposes, no validation is performed
@@ -82,7 +85,7 @@ export default function SuperLoginPage() {
 
           <div className="space-y-2">
             <Label>Select your role</Label>
-            <RadioGroup value={role} onValueChange={(value) => setRole(value as UserRole)}>
+            <RadioGroup value={role} onValueChange={(value) => setRole(value as UserRole)} disabled={redirecting}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="player" id="player" />
                 <Label htmlFor="player">Player</Label>
@@ -95,8 +98,8 @@ export default function SuperLoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" onClick={handleLogin}>
-            Login Instantly
+          <Button className="w-full" onClick={handleLogin} disabled={redirecting}>
+            {redirecting ? "Redirecting..." : "Login Instantly"}
           </Button>
           <Link href="/login/player" className="text-sm text-center text-blue-600 hover:underline">
             Back to normal login
