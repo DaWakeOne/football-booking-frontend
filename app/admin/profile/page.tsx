@@ -4,136 +4,88 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-context"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
-import { useAuth } from "@/components/auth-provider"
-import { getUserRole } from "@/lib/auth-utils"
 
-export default function OwnerProfilePage() {
-  const { user, supabase, isLoading } = useAuth()
+export default function OwnerProfile() {
+  const { user, userRole, isLoading, supabase } = useAuth()
   const router = useRouter()
-
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
+  const [profile, setProfile] = useState({
     about: "",
+    phone: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
-    // Check if user is authenticated and has the correct role
-    const role = getUserRole()
-    if (!isLoading && (!user || role !== "owner")) {
-      router.push("/login/owner")
-    }
-  }, [user, isLoading, router])
+    if (!isLoading && (!user || userRole !== "owner")) {
+      router.push("/unauthorized")
+    } else if (user) {
+      // Fetch owner profile
+      const fetchProfile = async () => {
+        const { data, error } = await supabase.from("owner_profiles").select("*").eq("user_id", user.id).single()
 
-  useEffect(() => {
-    // Fetch owner profile data
-    const fetchProfile = async () => {
-      if (!user?.id) return
-
-      try {
-        // First check if owner profile exists
-        const { data: ownerProfile, error: profileError } = await supabase
-          .from("owner_profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single()
-
-        if (profileError && profileError.code !== "PGRST116") {
-          throw profileError
+        if (data) {
+          setProfile({
+            about: data.about || "",
+            phone: data.phone || "",
+          })
+        } else if (error && error.code !== "PGRST116") {
+          // PGRST116 is "no rows returned" error, which is fine for new users
+          console.error("Error fetching profile:", error)
         }
-
-        // Then get user data
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("name")
-          .eq("id", user.id)
-          .single()
-
-        if (userError) throw userError
-
-        setFormData({
-          name: userData?.name || "",
-          phone: ownerProfile?.phone || "",
-          about: ownerProfile?.about || "",
-        })
-      } catch (err: any) {
-        console.error("Error fetching profile:", err)
-        setError("Failed to load profile data")
       }
+
+      fetchProfile()
     }
-
-    fetchProfile()
-  }, [user, supabase])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  }, [user, userRole, isLoading, router, supabase])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    setSuccess(false)
-
-    if (!user?.id) {
-      setError("You must be logged in to update your profile")
-      return
-    }
-
     setIsSubmitting(true)
+    setMessage("")
 
     try {
-      // Update user name
-      const { error: userError } = await supabase.from("users").update({ name: formData.name }).eq("id", user.id)
+      if (!user) return
 
-      if (userError) throw userError
-
-      // Check if owner profile exists
-      const { data: existingProfile, error: checkError } = await supabase
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
         .from("owner_profiles")
         .select("id")
         .eq("user_id", user.id)
         .single()
 
-      if (checkError && checkError.code !== "PGRST116") {
-        throw checkError
-      }
-
-      // Update or insert owner profile
       if (existingProfile) {
-        const { error: updateError } = await supabase
+        // Update existing profile
+        const { error } = await supabase
           .from("owner_profiles")
           .update({
-            phone: formData.phone,
-            about: formData.about,
+            about: profile.about,
+            phone: profile.phone,
+            updated_at: new Date().toISOString(),
           })
           .eq("user_id", user.id)
 
-        if (updateError) throw updateError
+        if (error) throw error
       } else {
-        const { error: insertError } = await supabase.from("owner_profiles").insert({
+        // Create new profile
+        const { error } = await supabase.from("owner_profiles").insert({
           user_id: user.id,
-          phone: formData.phone,
-          about: formData.about,
+          about: profile.about,
+          phone: profile.phone,
         })
 
-        if (insertError) throw insertError
+        if (error) throw error
       }
 
-      setSuccess(true)
-    } catch (err: any) {
-      console.error("Error updating profile:", err)
-      setError(err.message || "Failed to update profile")
+      setMessage("Profile updated successfully!")
+    } catch (error) {
+      console.error("Error updating profile:", error)
+      setMessage("Failed to update profile. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -141,61 +93,41 @@ export default function OwnerProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto p-6">
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg">Loading...</p>
+        </div>
       </div>
     )
   }
 
+  if (!user || userRole !== "owner") {
+    return null // Will redirect in useEffect
+  }
+
   return (
-    <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Owner Profile</h1>
 
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>Update your personal information and contact details</CardDescription>
+          <CardTitle>Personal Information</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {success && (
-            <Alert className="mb-6 bg-green-50 border-green-200">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-800">Success!</AlertTitle>
-              <AlertDescription className="text-green-700">
-                Your profile has been updated successfully.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" value={user?.email || ""} disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground">Your email address cannot be changed</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" name="name" value={formData.name} onChange={handleChange} disabled={isSubmitting} />
+              <Input id="email" value={user.email} disabled />
+              <p className="text-sm text-muted-foreground">Email cannot be changed</p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                placeholder="+1 (123) 456-7890"
+                value={profile.phone}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                placeholder="Enter your phone number"
               />
             </div>
 
@@ -203,25 +135,23 @@ export default function OwnerProfilePage() {
               <Label htmlFor="about">About</Label>
               <Textarea
                 id="about"
-                name="about"
-                value={formData.about}
-                onChange={handleChange}
-                disabled={isSubmitting}
+                value={profile.about}
+                onChange={(e) => setProfile({ ...profile, about: e.target.value })}
                 placeholder="Tell us about yourself or your organization"
-                rows={4}
+                rows={5}
               />
             </div>
 
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
+            {message && <p className={message.includes("Failed") ? "text-red-500" : "text-green-500"}>{message}</p>}
+
+            <div className="flex justify-end gap-4">
+              <Button type="button" variant="outline" onClick={() => router.push("/admin/dashboard")}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
