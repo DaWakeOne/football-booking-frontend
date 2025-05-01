@@ -3,16 +3,22 @@
 import type React from "react"
 
 import { useState } from "react"
+import Link from "next/link"
+import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { Loader2 } from "lucide-react"
-import Link from "next/link"
-import type { UserRole } from "@/lib/database.types"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { createBrowserClient } from "@/lib/supabase"
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
+import type { UserRole } from "@/lib/database.types"
+
+// Server action for login
+import { serverLogin } from "@/app/actions/server-auth-actions"
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+})
 
 interface LoginFormProps {
   role: UserRole
@@ -23,155 +29,74 @@ export function LoginForm({ role }: LoginFormProps) {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [connectionError, setConnectionError] = useState<boolean>(false)
+  const [success, setSuccess] = useState(false)
   const [redirecting, setRedirecting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setConnectionError(false)
-
-    if (!email || !password) {
-      setError("Please enter your email and password")
-      return
-    }
-
-    setIsLoading(true)
 
     try {
-      // Create Supabase client
-      let supabase
-      try {
-        supabase = createBrowserClient()
-      } catch (err: any) {
-        console.error("Failed to create Supabase client:", err)
-        setConnectionError(true)
-        throw new Error("Could not connect to authentication service. Please try the super login option.")
+      // Validate form data
+      const result = loginSchema.safeParse({ email, password })
+
+      if (!result.success) {
+        const errorMessage = result.error.issues[0]?.message || "Invalid form data"
+        setError(errorMessage)
+        return
       }
 
-      // Sign in with email and password
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      setIsLoading(true)
 
-      if (signInError) {
-        console.error("Sign in error:", signInError)
+      // Call the server action
+      const response = await serverLogin(email, password, role)
 
-        // Check if it's a network error
-        if (signInError.message.includes("fetch") || signInError.message.includes("network")) {
-          setConnectionError(true)
-          throw new Error("Network error connecting to authentication service. Please try the super login option.")
-        }
-
-        throw new Error(signInError.message)
+      if (!response.success) {
+        setError(response.error || "Failed to log in")
+        return
       }
 
-      if (!data.user) {
-        throw new Error("No user returned from login")
-      }
+      // Show success message
+      setSuccess(true)
 
-      // Check if the user has the correct role
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", data.user.id)
-        .single()
-
-      if (userError && userError.code !== "PGRST116") {
-        console.error("Error fetching user role:", userError)
-
-        // If we can't fetch the role, we'll use the provided role
-        // Store auth info in localStorage for client-side use
-        localStorage.setItem(
-          "auth_user",
-          JSON.stringify({
-            id: data.user.id,
-            email: data.user.email,
-            role: role,
-          }),
-        )
-      } else if (userData && userData.role !== role) {
-        throw new Error(`You are not registered as a ${role}. Please use the correct login page.`)
-      } else if (userData) {
-        // Store auth info in localStorage for client-side use
-        localStorage.setItem(
-          "auth_user",
-          JSON.stringify({
-            id: data.user.id,
-            email: data.user.email,
-            role: userData.role,
-          }),
-        )
-      } else {
-        // If no user record exists, create one with the provided role
-        localStorage.setItem(
-          "auth_user",
-          JSON.stringify({
-            id: data.user.id,
-            email: data.user.email,
-            role: role,
-          }),
-        )
-      }
-
+      // Redirect after a delay
       setRedirecting(true)
-
-      toast({
-        title: "Login successful",
-        description: "You will be redirected shortly.",
-      })
-
-      // Use direct window.location for more reliable redirection
-      const redirectPath = role === "player" ? "/profile" : "/admin/fields"
-      console.log("Redirecting to:", redirectPath)
-
-      // Add a slightly longer delay to ensure localStorage is set and toast is shown
       setTimeout(() => {
-        // Use window.location.href for more reliable redirection
-        window.location.href = redirectPath
+        // Use window.location for more reliable redirection
+        if (role === "owner") {
+          window.location.href = "/admin/dashboard"
+        } else {
+          window.location.href = "/fields"
+        }
       }, 1500)
-    } catch (error: any) {
-      console.error("Login error:", error)
-      setError(error.message || "An error occurred during login")
+    } catch (err: any) {
+      console.error("Login error:", err)
+      setError(err.message || "An error occurred during login")
+    } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSuperLogin = () => {
-    // Create a fake user ID
-    const userId = `manual-${Date.now()}`
-
-    // Store auth in localStorage
-    localStorage.setItem(
-      "auth_user",
-      JSON.stringify({
-        id: userId,
-        email: email || "user@example.com",
-        role: role,
-      }),
-    )
-
-    setRedirecting(true)
-
-    toast({
-      title: "Super login successful",
-      description: "You will be redirected shortly.",
-    })
-
-    // Use direct window.location for more reliable redirection
-    const redirectPath = role === "player" ? "/profile" : "/admin/fields"
-    console.log("Redirecting to:", redirectPath)
-
-    // Add a slightly longer delay to ensure localStorage is set and toast is shown
-    setTimeout(() => {
-      // Use window.location.href for more reliable redirection
-      window.location.href = redirectPath
-    }, 1500)
-  }
-
   return (
     <div className="grid gap-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-800">Success!</AlertTitle>
+          <AlertDescription className="text-green-700">
+            {redirecting ? "Redirecting to your dashboard..." : "Login successful!"}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <div className="grid gap-2">
@@ -182,9 +107,11 @@ export function LoginForm({ role }: LoginFormProps) {
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading || redirecting}
+              disabled={isLoading || success}
+              required
             />
           </div>
+
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input
@@ -192,62 +119,41 @@ export function LoginForm({ role }: LoginFormProps) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading || redirecting}
+              disabled={isLoading || success}
+              required
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
 
-          {redirecting && (
-            <Alert className="mt-4">
-              <AlertTitle>Login successful!</AlertTitle>
-              <AlertDescription>Redirecting you to your dashboard...</AlertDescription>
-            </Alert>
-          )}
-
-          {connectionError && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertTitle>Connection Error</AlertTitle>
-              <AlertDescription>
-                <p className="mb-2">Could not connect to the authentication service.</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-2"
-                  onClick={handleSuperLogin}
-                  disabled={redirecting}
-                >
-                  Use Super Login Instead
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <Button disabled={isLoading || redirecting}>
+          <Button type="submit" disabled={isLoading || success}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Logging in...
               </>
             ) : redirecting ? (
-              "Redirecting..."
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Redirecting...
+              </>
             ) : (
-              "Login"
+              "Log In"
             )}
           </Button>
         </div>
       </form>
-      <div className="text-center text-sm">
+
+      <div className="mt-4 text-center text-sm">
         Don't have an account?{" "}
         <Link href={`/signup/${role}`} className="underline">
           Sign up
         </Link>
       </div>
+
       <div className="text-center text-xs text-muted-foreground">
         <Link href="/super-login" className="hover:underline">
-          Having trouble? Try super login
+          Having trouble logging in?
         </Link>
       </div>
-      <Toaster />
     </div>
   )
 }

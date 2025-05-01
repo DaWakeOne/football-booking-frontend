@@ -17,6 +17,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Loader2, Plus, X } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface FieldFormProps {
   userId: string
@@ -24,7 +25,7 @@ interface FieldFormProps {
 }
 
 const surfaceTypes = ["Natural Grass", "Artificial Turf", "Indoor", "5-a-side", "7-a-side", "11-a-side"]
-const fieldTypes = ["open", "closed"]
+const fieldTypes = ["open", "closed", "combined"]
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const timeSlots = Array.from({ length: 17 }, (_, i) => `${(i + 6).toString().padStart(2, "0")}:00`)
 
@@ -61,6 +62,7 @@ export function FieldForm({ userId, field }: FieldFormProps) {
   const [newImageUrl, setNewImageUrl] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("basic")
+  const [error, setError] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -94,51 +96,31 @@ export function FieldForm({ userId, field }: FieldFormProps) {
 
   const validateForm = () => {
     if (!formData.name) {
-      toast({
-        title: "Missing field name",
-        description: "Please enter a name for your field",
-        variant: "destructive",
-      })
+      setError("Please enter a name for your field")
       setActiveTab("basic")
       return false
     }
 
     if (!formData.location) {
-      toast({
-        title: "Missing address",
-        description: "Please enter the address of your field",
-        variant: "destructive",
-      })
+      setError("Please enter the address of your field")
       setActiveTab("basic")
       return false
     }
 
     if (!formData.field_type) {
-      toast({
-        title: "Missing field type",
-        description: "Please select if your field is open or closed",
-        variant: "destructive",
-      })
+      setError("Please select if your field is open, closed, or combined")
       setActiveTab("basic")
       return false
     }
 
     if (!formData.surface_type) {
-      toast({
-        title: "Missing surface type",
-        description: "Please select the surface type of your field",
-        variant: "destructive",
-      })
+      setError("Please select the surface type of your field")
       setActiveTab("basic")
       return false
     }
 
     if (!formData.price_per_hour) {
-      toast({
-        title: "Missing price",
-        description: "Please enter the price per hour for your field",
-        variant: "destructive",
-      })
+      setError("Please enter the price per hour for your field")
       setActiveTab("basic")
       return false
     }
@@ -153,11 +135,7 @@ export function FieldForm({ userId, field }: FieldFormProps) {
     }
 
     if (!hasAvailability) {
-      toast({
-        title: "No availability set",
-        description: "Please set at least one available time slot for your field",
-        variant: "destructive",
-      })
+      setError("Please set at least one available time slot for your field")
       setActiveTab("availability")
       return false
     }
@@ -167,6 +145,7 @@ export function FieldForm({ userId, field }: FieldFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
 
     if (!validateForm()) {
       return
@@ -243,11 +222,8 @@ export function FieldForm({ userId, field }: FieldFormProps) {
         router.refresh()
       }, 1000)
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      })
+      console.error("Error creating/updating field:", error)
+      setError(error.message || "An error occurred")
     } finally {
       setIsSubmitting(false)
     }
@@ -256,6 +232,13 @@ export function FieldForm({ userId, field }: FieldFormProps) {
   return (
     <Card>
       <CardContent className="pt-6">
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="basic">Basic Information</TabsTrigger>
@@ -284,6 +267,7 @@ export function FieldForm({ userId, field }: FieldFormProps) {
                   <SelectContent>
                     <SelectItem value="open">Open Field</SelectItem>
                     <SelectItem value="closed">Closed Field</SelectItem>
+                    <SelectItem value="combined">Combined (Open/Closed)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

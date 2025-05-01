@@ -1,15 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "./auth-provider.tsx"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useAuth } from "./auth-provider"
 import type { Field } from "@/lib/database.types"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Clock, MapPin, Edit, Trash2, Loader2 } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2, PencilIcon, TrashIcon, AlertCircle } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,129 +16,151 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import Image from "next/image"
-import Link from "next/link"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
-interface AdminFieldsListProps {
-  fields: Field[]
-}
+export function AdminFieldsList() {
+  const { user, supabase } = useAuth()
+  const [fields, setFields] = useState<Field[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [fieldToDelete, setFieldToDelete] = useState<Field | null>(null)
 
-export function AdminFieldsList({ fields }: AdminFieldsListProps) {
-  const { supabase } = useAuth()
-  const router = useRouter()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  useEffect(() => {
+    const fetchFields = async () => {
+      if (!user?.id) return
 
-  const handleDeleteField = async (fieldId: string) => {
-    setDeletingId(fieldId)
+      try {
+        setIsLoading(true)
+        const { data, error } = await supabase
+          .from("fields")
+          .select("*")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: false })
 
-    const { error } = await supabase.from("fields").delete().eq("id", fieldId)
+        if (error) throw error
 
-    setDeletingId(null)
-
-    if (error) {
-      toast({
-        title: "Error deleting field",
-        description: error.message,
-        variant: "destructive",
-      })
-      return
+        setFields(data || [])
+      } catch (err: any) {
+        console.error("Error fetching fields:", err)
+        setError(err.message || "Failed to load fields")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    toast({
-      title: "Field deleted",
-      description: "Your field has been successfully deleted.",
-    })
+    fetchFields()
+  }, [user, supabase])
 
-    router.refresh()
+  const handleDeleteField = async () => {
+    if (!fieldToDelete) return
+
+    try {
+      const { error } = await supabase.from("fields").delete().eq("id", fieldToDelete.id)
+
+      if (error) throw error
+
+      // Remove the deleted field from the state
+      setFields((prev) => prev.filter((field) => field.id !== fieldToDelete.id))
+      setFieldToDelete(null)
+    } catch (err: any) {
+      console.error("Error deleting field:", err)
+      setError(err.message || "Failed to delete field")
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (fields.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground mb-4">You haven't created any fields yet.</p>
+        <Button asChild>
+          <Link href="/admin/fields/new">Create Your First Field</Link>
+        </Button>
+      </div>
+    )
   }
 
   return (
-    <div>
-      {fields.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {fields.map((field) => (
-            <Card key={field.id}>
-              <div className="relative h-48 w-full">
-                <Image
-                  src={field.image_url || "/placeholder.svg?height=200&width=400"}
-                  alt={field.name}
-                  fill
-                  className="object-cover rounded-t-lg"
-                />
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {fields.map((field) => (
+        <Card key={field.id}>
+          <CardHeader className="pb-2">
+            <CardTitle className="truncate">{field.name}</CardTitle>
+            <CardDescription className="truncate">{field.location}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Type:</span>
+                <span className="text-sm capitalize">{field.field_type}</span>
               </div>
-              <CardHeader className="p-4">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl">{field.name}</CardTitle>
-                  <Badge>{field.surface_type}</Badge>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Surface:</span>
+                <span className="text-sm">{field.surface_type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Price:</span>
+                <span className="text-sm">${field.price_per_hour}/hour</span>
+              </div>
+              {field.image_url && (
+                <div className="mt-4">
+                  <img
+                    src={field.image_url || "/placeholder.svg"}
+                    alt={field.name}
+                    className="w-full h-32 object-cover rounded-md"
+                  />
                 </div>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <MapPin className="mr-1 h-4 w-4" />
-                  <span>{field.location}</span>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="flex items-center text-sm">
-                  <Clock className="mr-1 h-4 w-4" />
-                  <span>
-                    {field.open_time.substring(0, 5)} - {field.close_time.substring(0, 5)}
-                  </span>
-                </div>
-                <p className="mt-2 text-lg font-semibold">${field.price_per_hour}/hour</p>
-              </CardContent>
-              <CardFooter className="p-4 pt-0 flex justify-between">
-                <Button asChild variant="outline">
-                  <Link href={`/admin/fields/${field.id}`}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Link>
-                </Button>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/admin/fields/${field.id}`}>
+                <PencilIcon className="h-4 w-4 mr-1" />
+                Edit
+              </Link>
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => setFieldToDelete(field)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
 
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the field and all associated
-                        bookings.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteField(field.id)} disabled={deletingId === field.id}>
-                        {deletingId === field.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Deleting...
-                          </>
-                        ) : (
-                          "Delete"
-                        )}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center p-8 border rounded-lg">
-          <h3 className="text-lg font-medium">No fields found</h3>
-          <p className="text-muted-foreground mt-2">You haven't added any fields yet.</p>
-          <Button asChild className="mt-4">
-            <Link href="/admin/fields/new">Add Your First Field</Link>
-          </Button>
-        </div>
-      )}
-      <Toaster />
+      <AlertDialog open={!!fieldToDelete} onOpenChange={(open) => !open && setFieldToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the field "{fieldToDelete?.name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteField} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
