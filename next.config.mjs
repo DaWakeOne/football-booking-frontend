@@ -1,24 +1,29 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    // This will allow us to use client components in the app directory
-    appDir: true,
-  },
+  // Disable static generation completely
+  output: 'standalone',
+  
+  // Disable image optimization
   images: {
-    domains: ['localhost', 'vercel.app'],
     unoptimized: true,
   },
-  // Disable static generation for admin pages
-  unstable_staticGeneration: {
-    basePath: '/admin',
-    excludePattern: ['**/*'],
+  
+  // Ignore TypeScript and ESLint errors during build
+  typescript: {
+    ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  typescript: {
-    ignoreBuildErrors: true,
+  
+  // Increase the build timeout if needed
+  experimental: {
+    turbotrace: {
+      logLevel: 'error',
+    },
+    // Disable static generation for all pages
+    appDir: true,
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

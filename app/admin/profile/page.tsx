@@ -1,5 +1,8 @@
-import { AdminProfileClient } from "@/components/admin-profile-client"
+import { AdminProfileWrapper } from "@/components/admin-profile-wrapper"
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic"
 
 export default function AdminProfilePage() {
-  return <AdminProfileClient />
+  return <AdminProfileWrapper />
 }

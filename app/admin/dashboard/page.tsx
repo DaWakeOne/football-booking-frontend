@@ -1,5 +1,8 @@
-import { AdminDashboardClient } from "@/components/admin-dashboard-client"
+import { AdminDashboardWrapper } from "@/components/admin-dashboard-wrapper"
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic"
 
 export default function AdminDashboardPage() {
-  return <AdminDashboardClient />
+  return <AdminDashboardWrapper />
 }
