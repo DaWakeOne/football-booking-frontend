@@ -62,7 +62,8 @@
     "child_process": "latest",
     "fs": "latest",
     "path": "latest",
-    "@supabase/auth-helpers-nextjs": "latest"
+    "@supabase/auth-helpers-nextjs": "latest",
+    "@supabase/auth-helpers-react": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
