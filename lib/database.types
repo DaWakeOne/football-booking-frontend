@@ -1,120 +1,120 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
   public: {
     Tables: {
       fields: {
         Row: {
-          id: string
-          name: string
-          location: string
-          description: string | null
-          image_url: string | null
-          price_per_hour: number
-          field_size: string | null
-          surface_type: string
-          field_type: string
-          open_time: string | null
-          close_time: string | null
-          contact_phone: string | null
-          contact_email: string | null
-          owner_id: string
-          created_at: string | null
-          availability_json: string | null
-        }
+          id: string;
+          name: string;
+          location: string;
+          description: string | null;
+          image_url: string | null;
+          price_per_hour: number;
+          field_size: string | null;
+          surface_type: string;
+          field_type: string;
+          open_time: string | null;
+          close_time: string | null;
+          contact_phone: string | null;
+          contact_email: string | null;
+          owner_id: string;
+          created_at: string | null;
+          availability_json: string | null;
+        };
         Insert: {
-          id?: string
-          name: string
-          location: string
-          description?: string | null
-          image_url?: string | null
-          price_per_hour: number
-          field_size?: string | null
-          surface_type: string
-          field_type: string
-          open_time?: string | null
-          close_time?: string | null
-          contact_phone?: string | null
-          contact_email?: string | null
-          owner_id: string
-          created_at?: string | null
-          availability_json?: string | null
-        }
+          id?: string;
+          name: string;
+          location: string;
+          description?: string | null;
+          image_url?: string | null;
+          price_per_hour: number;
+          field_size?: string | null;
+          surface_type: string;
+          field_type: string;
+          open_time?: string | null;
+          close_time?: string | null;
+          contact_phone?: string | null;
+          contact_email?: string | null;
+          owner_id: string;
+          created_at?: string | null;
+          availability_json?: string | null;
+        };
         Update: {
-          id?: string
-          name?: string
-          location?: string
-          description?: string | null
-          image_url?: string | null
-          price_per_hour?: number
-          field_size?: string | null
-          surface_type?: string
-          field_type?: string
-          open_time?: string | null
-          close_time?: string | null
-          contact_phone?: string | null
-          contact_email?: string | null
-          owner_id?: string
-          created_at?: string | null
-          availability_json?: string | null
-        }
-      }
+          id?: string;
+          name?: string;
+          location?: string;
+          description?: string | null;
+          image_url?: string | null;
+          price_per_hour?: number;
+          field_size?: string | null;
+          surface_type?: string;
+          field_type?: string;
+          open_time?: string | null;
+          close_time?: string | null;
+          contact_phone?: string | null;
+          contact_email?: string | null;
+          owner_id?: string;
+          created_at?: string | null;
+          availability_json?: string | null;
+        };
+      };
       bookings: {
         Row: {
-          id: string
-          field_id: string
-          user_id: string
-          booking_date: string
-          start_time: string
-          end_time: string
-          status: string
-          created_at: string
-        }
+          id: string;
+          field_id: string;
+          user_id: string;
+          booking_date: string;
+          start_time: string;
+          end_time: string;
+          status: string;
+          created_at: string;
+        };
         Insert: {
-          id?: string
-          field_id: string
-          user_id: string
-          booking_date: string
-          start_time: string
-          end_time: string
-          status?: string
-          created_at?: string
-        }
+          id?: string;
+          field_id: string;
+          user_id: string;
+          booking_date: string;
+          start_time: string;
+          end_time: string;
+          status?: string;
+          created_at?: string;
+        };
         Update: {
-          id?: string
-          field_id?: string
-          user_id?: string
-          booking_date?: string
-          start_time?: string
-          end_time?: string
-          status?: string
-          created_at?: string
-        }
-      }
+          id?: string;
+          field_id?: string;
+          user_id?: string;
+          booking_date?: string;
+          start_time?: string;
+          end_time?: string;
+          status?: string;
+          created_at?: string;
+        };
+      };
       users: {
         Row: {
-          id: string
-          email: string
-          role: string
-          created_at: string
-        }
+          id: string;
+          email: string;
+          role: string;
+          created_at: string;
+        };
         Insert: {
-          id: string
-          email: string
-          role: string
-          created_at?: string
-        }
+          id: string;
+          email: string;
+          role: string;
+          created_at?: string;
+        };
         Update: {
-          id?: string
-          email?: string
-          role?: string
-          created_at?: string
-        }
-      }
-    }
-  }
+          id?: string;
+          email?: string;
+          role?: string;
+          created_at?: string;
+        };
+      };
+    };
+  };
 }
 
-export type Field = Database["public"]["Tables"]["fields"]["Row"]
-export type NewBooking = Database["public"]["Tables"]["bookings"]["Insert"]
-export type UserRole = "player" | "owner" | "admin"
+export type Field = Database["public"]["Tables"]["fields"]["Row"];
+export type NewBooking = Database["public"]["Tables"]["bookings"]["Insert"];
+export type UserRole = "player" | "owner" | "admin";
