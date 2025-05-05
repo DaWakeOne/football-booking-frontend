@@ -1,28 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable static generation completely
-  output: 'standalone',
-  
-  // Disable image optimization
-  images: {
-    unoptimized: true,
-  },
-  
-  // Ignore TypeScript and ESLint errors during build
   typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
     ignoreBuildErrors: true,
   },
   eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  
-  // Increase the build timeout if needed
+  images: {
+    unoptimized: true,
+  },
+  // Disable static optimization for pages that use Server Components
   experimental: {
-    turbotrace: {
-      logLevel: 'error',
-    },
-    // Disable static generation for all pages
-    appDir: true,
+    serverActions: true,
   },
 }
 
