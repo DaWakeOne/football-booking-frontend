@@ -1,29 +1,9 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react"
-
-// Form validation schema
-const signupSchema = z
-  .object({
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  })
 
 export function OwnerSignupForm() {
   const router = useRouter()
@@ -33,23 +13,25 @@ export function OwnerSignupForm() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setError(null)
+    setError("")
+
+    // Basic validation
+    if (!email || !password || !confirmPassword) {
+      setError("All fields are required")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
 
     try {
-      // Validate form data
-      const result = signupSchema.safeParse({ email, password, confirmPassword })
-
-      if (!result.success) {
-        const errorMessage = result.error.issues[0]?.message || "Invalid form data"
-        setError(errorMessage)
-        return
-      }
-
       setIsLoading(true)
 
       // Sign up the user with Supabase
@@ -59,7 +41,7 @@ export function OwnerSignupForm() {
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
-            role: "owner", // Store role in auth metadata
+            role: "owner",
           },
         },
       })
@@ -67,20 +49,6 @@ export function OwnerSignupForm() {
       if (signUpError) throw signUpError
 
       if (data.user) {
-        // Create user profile with owner role
-        const { error: profileError } = await supabase.from("users").insert([
-          {
-            id: data.user.id,
-            email: data.user.email,
-            role: "owner",
-          },
-        ])
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError)
-          // Continue anyway - we'll handle this during auth callback
-        }
-
         // Show success message
         setSuccess(true)
 
@@ -89,7 +57,7 @@ export function OwnerSignupForm() {
         setPassword("")
         setConfirmPassword("")
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Signup error:", err)
       setError(err.message || "An error occurred during signup")
     } finally {
@@ -99,30 +67,24 @@ export function OwnerSignupForm() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {error && <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
       {success && (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Registration Successful!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Please check your email for a confirmation link to activate your account.
-          </AlertDescription>
-        </Alert>
+        <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
+          <p className="font-medium">Registration Successful!</p>
+          <p>Please check your email for a confirmation link to activate your account.</p>
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
+          <label htmlFor="email" className="block text-sm font-medium">
+            Email
+          </label>
+          <input
             id="email"
             type="email"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
             placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -132,10 +94,13 @@ export function OwnerSignupForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
+          <label htmlFor="password" className="block text-sm font-medium">
+            Password
+          </label>
+          <input
             id="password"
             type="password"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading || success}
@@ -144,10 +109,13 @@ export function OwnerSignupForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input
+          <label htmlFor="confirmPassword" className="block text-sm font-medium">
+            Confirm Password
+          </label>
+          <input
             id="confirmPassword"
             type="password"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={isLoading || success}
@@ -155,35 +123,30 @@ export function OwnerSignupForm() {
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading || success}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account...
-            </>
-          ) : success ? (
-            <>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Account created!
-            </>
-          ) : (
-            "Register"
-          )}
-        </Button>
+        <button
+          type="submit"
+          className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+          disabled={isLoading || success}
+        >
+          {isLoading ? "Creating account..." : success ? "Account created!" : "Register"}
+        </button>
       </form>
 
       <div className="text-center text-sm">
         Already have an account?{" "}
-        <Link href="/login/owner" className="font-medium text-primary hover:underline">
+        <Link href="/login/owner" className="font-medium text-blue-600 hover:underline">
           Login
         </Link>
       </div>
 
       <div className="pt-2">
-        <Button variant="ghost" size="sm" className="w-full" onClick={() => router.push("/")} disabled={isLoading}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+        <button
+          className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:outline-none disabled:opacity-50"
+          onClick={() => router.push("/")}
+          disabled={isLoading}
+        >
           Back to Home
-        </Button>
+        </button>
       </div>
     </div>
   )
