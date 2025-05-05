@@ -1,11 +1,19 @@
-import "./globals.css"
-import ClientLayout from "./ClientLayout"
+'use client'
+
+import './globals.css'
+import { useState } from 'react'
+import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import { SessionContextProvider } from '@supabase/auth-helpers-react'
 
 export default function RootLayout({ children }) {
+  const [supabase] = useState(() => createBrowserSupabaseClient())
+
   return (
     <html lang="en">
       <body>
-        <ClientLayout>{children}</ClientLayout>
+        <SessionContextProvider supabaseClient={supabase}>
+          <main className="min-h-screen bg-white">{children}</main>
+        </SessionContextProvider>
       </body>
     </html>
   )
