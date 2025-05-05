@@ -1,31 +1,13 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase"
-import type { UserRole } from "@/lib/database.types"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 
-export async function createUserProfile(userId: string, email: string, role: UserRole) {
+export async function createUserProfile(userId: string, email: string, role: "player" | "owner") {
   try {
-    const supabase = createServerClient()
+    console.log("Creating user profile for:", userId, email, role)
 
-    // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from("users")
-      .select("id")
-      .eq("id", userId)
-      .single()
-
-    if (checkError && checkError.code !== "PGRST116") {
-      console.error("Error checking user:", checkError)
-      return { success: false, error: checkError.message }
-    }
-
-    // If user already exists, return success
-    if (existingUser) {
-      return { success: true }
-    }
-
-    // Create user profile
-    const { error } = await supabase.from("users").insert([
+    // Use the admin client to bypass RLS
+    const { error } = await supabaseAdmin.from("users").insert([
       {
         id: userId,
         email,
@@ -34,31 +16,16 @@ export async function createUserProfile(userId: string, email: string, role: Use
     ])
 
     if (error) {
-      console.error("Error creating user profile:", error)
-      return { success: false, error: error.message }
+      console.error("Supabase error:", error)
+      throw error
     }
 
     return { success: true }
   } catch (error: any) {
-    console.error("Error in createUserProfile:", error)
-    return { success: false, error: error.message || "An error occurred" }
-  }
-}
-
-export async function getUserProfile(userId: string) {
-  try {
-    const supabase = createServerClient()
-
-    const { data, error } = await supabase.from("users").select("*").eq("id", userId).single()
-
-    if (error) {
-      console.error("Error getting user profile:", error)
-      return { success: false, error: error.message }
+    console.error("Error creating user profile:", error)
+    return {
+      success: false,
+      error: error.message || "Failed to create user profile",
     }
-
-    return { success: true, data }
-  } catch (error: any) {
-    console.error("Error in getUserProfile:", error)
-    return { success: false, error: error.message || "An error occurred" }
   }
 }

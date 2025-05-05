@@ -6,89 +6,89 @@ export interface Database {
       fields: {
         Row: {
           id: string
-          created_at: string
           name: string
           location: string
-          surface_type: string
-          price_per_hour: number
-          open_time: string
-          close_time: string
           description: string | null
           image_url: string | null
-          owner_id: string
+          price_per_hour: number
+          field_size: string | null
+          surface_type: string
+          field_type: string
+          open_time: string | null
+          close_time: string | null
           contact_phone: string | null
           contact_email: string | null
-          field_type: string
-          field_size: string | null
+          owner_id: string
+          created_at: string | null
           availability_json: string | null
         }
         Insert: {
           id?: string
-          created_at?: string
           name: string
           location: string
-          surface_type: string
-          price_per_hour: number
-          open_time: string
-          close_time: string
           description?: string | null
           image_url?: string | null
-          owner_id: string
+          price_per_hour: number
+          field_size?: string | null
+          surface_type: string
+          field_type: string
+          open_time?: string | null
+          close_time?: string | null
           contact_phone?: string | null
           contact_email?: string | null
-          field_type?: string
-          field_size?: string | null
+          owner_id: string
+          created_at?: string | null
           availability_json?: string | null
         }
         Update: {
           id?: string
-          created_at?: string
           name?: string
           location?: string
-          surface_type?: string
-          price_per_hour?: number
-          open_time?: string
-          close_time?: string
           description?: string | null
           image_url?: string | null
-          owner_id?: string
+          price_per_hour?: number
+          field_size?: string | null
+          surface_type?: string
+          field_type?: string
+          open_time?: string | null
+          close_time?: string | null
           contact_phone?: string | null
           contact_email?: string | null
-          field_type?: string
-          field_size?: string | null
+          owner_id?: string
+          created_at?: string | null
           availability_json?: string | null
         }
       }
       bookings: {
         Row: {
           id: string
-          created_at: string
           field_id: string
           user_id: string
           booking_date: string
           start_time: string
           end_time: string
           status: string
+          created_at: string
         }
         Insert: {
           id?: string
-          created_at?: string
           field_id: string
           user_id: string
           booking_date: string
           start_time: string
           end_time: string
           status?: string
+          created_at?: string
         }
         Update: {
           id?: string
-          created_at?: string
           field_id?: string
           user_id?: string
           booking_date?: string
           start_time?: string
           end_time?: string
           status?: string
+          created_at?: string
         }
       }
       users: {

@@ -58,6 +58,9 @@ export function OwnerSignupForm() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            role: "owner", // Store role in auth metadata
+          },
         },
       })
 
@@ -73,7 +76,10 @@ export function OwnerSignupForm() {
           },
         ])
 
-        if (profileError) throw profileError
+        if (profileError) {
+          console.error("Profile creation error:", profileError)
+          // Continue anyway - we'll handle this during auth callback
+        }
 
         // Show success message
         setSuccess(true)
