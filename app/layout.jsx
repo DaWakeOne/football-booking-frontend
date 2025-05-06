@@ -12,7 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <SessionContextProvider supabaseClient={supabase}>
-          <main className="min-h-screen bg-white">{children}</main>
+          {children}
         </SessionContextProvider>
       </body>
     </html>
