@@ -1,19 +1,17 @@
-import { PlayerLayoutWrapper } from "@/components/player-layout-wrapper"
-import { FieldsList } from "@/components/fields-list"
-import { FieldsFilter } from "@/components/fields-filter"
+'use client';
+
+import { useAuth } from '@supabase/auth-helpers-react';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import { useState } from 'react';
 
 export default function FieldsPage() {
+  const auth = useAuth(); // this must be inside the component
+  const [supabase] = useState(() => createPagesBrowserClient());
+
   return (
-    <PlayerLayoutWrapper>
-      <h1 className="text-2xl font-bold mb-6">Football Fields</h1>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-1">
-          <FieldsFilter />
-        </div>
-        <div className="md:col-span-3">
-          <FieldsList />
-        </div>
-      </div>
-    </PlayerLayoutWrapper>
-  )
+    <div>
+      <h1>Fields</h1>
+      {/* You can use auth.user here */}
+    </div>
+  );
 }
