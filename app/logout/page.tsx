@@ -1,11 +1,12 @@
-"use client"
+'use client'
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-context"
 import { Loader2 } from "lucide-react"
+import { AuthProvider } from "@/components/AuthProvider"
 
-export default function LogoutPage() {
+function LogoutContent() {
   const { signOut } = useAuth()
   const router = useRouter()
 
@@ -25,5 +26,13 @@ export default function LogoutPage() {
         <p>Logging out...</p>
       </div>
     </div>
+  )
+}
+
+export default function LogoutPage() {
+  return (
+    <AuthProvider>
+      <LogoutContent />
+    </AuthProvider>
   )
 }
