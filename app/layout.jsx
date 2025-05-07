@@ -4,7 +4,7 @@ import './globals.css';
 import { useState } from 'react';
 import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { AuthProvider } from '@/components/auth-provider'; // ✅ Add this line
+import { AuthProvider } from '@/components/auth-provider'; // ✅ ADD THIS
 
 export default function RootLayout({ children }) {
   const [supabase] = useState(() => createBrowserSupabaseClient());
@@ -12,11 +12,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <SessionContextProvider supabaseClient={supabase}>
-          <AuthProvider> {/* ✅ Wrap children with your custom AuthProvider */}
+        <AuthProvider> {/* ✅ WRAPPING ENTIRE APP */}
+          <SessionContextProvider supabaseClient={supabase}>
             {children}
-          </AuthProvider>
-        </SessionContextProvider>
+          </SessionContextProvider>
+        </AuthProvider>
       </body>
     </html>
   );
