@@ -1,15 +1,17 @@
-"use client"
+'use client'
 
-import { PlayerLayoutWrapper } from "@/components/player-layout-wrapper"
+import { ClientOnly } from '@/components/client-only'
+import { AuthProvider } from '@/components/auth-provider'
 
 export default function ProfilePage() {
   return (
-    <PlayerLayoutWrapper>
-      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4">Profile Information</h2>
-        <p className="text-gray-500">Update your profile information here.</p>
-      </div>
-    </PlayerLayoutWrapper>
+    <ClientOnly>
+      <AuthProvider>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
+          <p className="text-gray-600">Welcome to your profile page. More details coming soon.</p>
+        </div>
+      </AuthProvider>
+    </ClientOnly>
   )
 }
