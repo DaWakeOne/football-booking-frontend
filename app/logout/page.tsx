@@ -1,23 +1,22 @@
-'use client'
+'use client';
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/auth-context"
-import { Loader2 } from "lucide-react"
-import { useAuth } from "@/components/auth-provider"
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth-provider";
+import { Loader2 } from "lucide-react";
 
 function LogoutContent() {
-  const { signOut } = useAuth()
-  const router = useRouter()
+  const { signOut } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const performLogout = async () => {
-      await signOut()
-      router.push("/login")
-    }
+      await signOut();
+      router.push("/login");
+    };
 
-    performLogout()
-  }, [signOut, router])
+    performLogout();
+  }, [signOut, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -26,13 +25,15 @@ function LogoutContent() {
         <p>Logging out...</p>
       </div>
     </div>
-  )
+  );
 }
+
+import { AuthProvider } from "@/components/auth-provider";
 
 export default function LogoutPage() {
   return (
     <AuthProvider>
       <LogoutContent />
     </AuthProvider>
-  )
+  );
 }
