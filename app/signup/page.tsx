@@ -1,9 +1,7 @@
-import dynamic from "next/dynamic"
+"use client";
 
-const SignupPageContent = dynamic(() => import("@/components/signup/signup-page-content"), {
-  ssr: false,
-})
+import SignupPageContent from "@/components/signup/signup-page-content";
 
 export default function SignupPage() {
-  return <SignupPageContent />
+  return <SignupPageContent />;
 }
