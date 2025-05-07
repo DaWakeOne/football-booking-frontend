@@ -3,7 +3,7 @@
 import { ClientOnly } from '@/components/client-only'
 import { AuthProvider } from '@/components/auth-provider'
 import { PlayerLayoutWrapper } from '@/components/player-layout-wrapper'
-import SchedulePageContent from '@/components/schedule-page-content' // move the large component here if needed
+import SchedulePageContent from '@/components/schedule-page-content'
 
 export default function SchedulePage() {
   return (
