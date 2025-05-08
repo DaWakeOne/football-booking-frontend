@@ -1,25 +1,28 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { PlayerLayoutWrapper } from '@/components/player-layout-wrapper';
+import { useAuth } from "@supabase/auth-helpers-react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function ChatPage() {
-  const [supabase] = useState(() => createPagesBrowserClient());
+  const { user } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!user) {
+      // Redirect to login if no user is authenticated
+      router.push("/login")
+    }
+  }, [user, router])
+
+  if (!user) {
+    return <p>Redirecting to login...</p>
+  }
 
   return (
-    <SessionContextProvider supabaseClient={supabase}>
-      <PlayerLayoutWrapper>
-        <h1 className="text-2xl font-bold mb-6">Chat</h1>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-gray-500">
-            No active conversations. Connect with friends to start chatting.
-          </p>
-        </div>
-      </PlayerLayoutWrapper>
-    </SessionContextProvider>
-  );
+    <div className="p-4">
+      <h1 className="text-2xl font-bold">Welcome to the Chat</h1>
+      <p className="text-gray-600">This is a protected chat page for authenticated users only.</p>
+    </div>
+  )
 }
-
-export const dynamic = "force-dynamic";
