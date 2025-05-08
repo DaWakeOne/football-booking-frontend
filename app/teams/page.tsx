@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 "use client"
 
 import { useState } from "react"
@@ -9,7 +10,6 @@ export default function TeamsPage() {
   const [newTeamName, setNewTeamName] = useState("")
   const [newTeamDescription, setNewTeamDescription] = useState("")
 
-  // Mock data for teams
   const myTeams = [
     {
       id: "1",
@@ -41,10 +41,7 @@ export default function TeamsPage() {
   const handleCreateTeam = () => {
     if (!newTeamName.trim()) return
 
-    // In a real app, you would send the team data to the server
     console.log("Creating team:", { name: newTeamName, description: newTeamDescription })
-
-    // Close the dialog and reset form
     setCreateDialogOpen(false)
     setNewTeamName("")
     setNewTeamDescription("")
@@ -68,3 +65,4 @@ export default function TeamsPage() {
     </AuthCheck>
   )
 }
+
