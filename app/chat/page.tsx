@@ -2,10 +2,9 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/ui/auth-provider" // ✅ Use your own auth hook
-import { AuthProvider } from "@/components/ui/auth-provider" // ✅ Provide the context
+import { useAuth } from "@/components/auth-provider" // ✅ Correct path
 
-function ChatPageContent() {
+export default function ChatPage() {
   const { user } = useAuth()
   const router = useRouter()
 
@@ -24,13 +23,5 @@ function ChatPageContent() {
       <h1 className="text-2xl font-bold">Welcome to the Chat</h1>
       <p className="text-gray-600">This is a protected chat page for authenticated users only.</p>
     </div>
-  )
-}
-
-export default function ChatPage() {
-  return (
-    <AuthProvider>
-      <ChatPageContent />
-    </AuthProvider>
   )
 }
