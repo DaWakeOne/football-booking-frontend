@@ -1,8 +1,13 @@
-"use client"; // must be first!
+"use client";
+export const dynamic = "force-dynamic";
 
-export const dynamic = "force-dynamic"; // can follow
 import SignupPageContent from "@/components/signup/signup-page-content";
+import { AuthProvider } from "@/components/auth-provider"; // ✅ your custom provider
 
 export default function SignupPage() {
-  return <SignupPageContent />;
+  return (
+    <AuthProvider>
+      <SignupPageContent />
+    </AuthProvider>
+  );
 }
