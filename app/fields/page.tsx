@@ -1,20 +1,17 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useAuth } from '@/components/auth-context';
+import dynamic from 'next/dynamic';
+
+export const dynamic = 'force-dynamic';
 
 export default function FieldsPage() {
   const { user } = useAuth();
 
-  if (!user) {
-    return <div>Please log in</div>;
-  }
-
   return (
     <div>
       <h1>Fields</h1>
-      <p>Welcome, {user.email}</p>
+      {user ? <p>Welcome, {user.email}</p> : <p>Please log in</p>}
     </div>
   );
 }
