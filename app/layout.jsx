@@ -2,21 +2,21 @@
 
 import './globals.css';
 import { useState } from 'react';
-import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { AuthProvider } from '@/components/auth-provider'; // ✅ ADD THIS
+import { AuthProvider } from '@/components/auth-provider';
 
 export default function RootLayout({ children }) {
-  const [supabase] = useState(() => createBrowserSupabaseClient());
+  const [supabase] = useState(() => createPagesBrowserClient());
 
   return (
     <html lang="en">
       <body>
-        <AuthProvider> {/* ✅ WRAPPING ENTIRE APP */}
-          <SessionContextProvider supabaseClient={supabase}>
+        <SessionContextProvider supabaseClient={supabase}>
+          <AuthProvider>
             {children}
-          </SessionContextProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </SessionContextProvider>
       </body>
     </html>
   );
