@@ -1,23 +1,18 @@
-'use client';
-
 import './globals.css';
-import { useState } from 'react';
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { AuthProvider } from '@/components/auth-provider';
+import { Inter } from 'next/font/google';
+import { Metadata } from 'next';
 
-export default function RootLayout({ children }) {
-  const [supabase] = useState(() => createPagesBrowserClient());
+const inter = Inter({ subsets: ['latin'] });
 
+export const metadata: Metadata = {
+  title: 'Football Booking App',
+  description: 'Book your football field now',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <SessionContextProvider supabaseClient={supabase}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </SessionContextProvider>
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
