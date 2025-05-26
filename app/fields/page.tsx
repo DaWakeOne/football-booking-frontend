@@ -1,7 +1,6 @@
 'use client';
 
 import { useAuth } from '@/components/auth-context';
-import dynamic from 'next/dynamic';
 
 export const dynamic = 'force-dynamic';
 
