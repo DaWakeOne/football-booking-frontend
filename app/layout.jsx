@@ -1,16 +1,23 @@
 'use client';
 
+import './globals.css';
 import { useState } from 'react';
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { AuthProvider } from '@/components/auth-provider';
+import { AuthProvider } from '@/components/auth-provider'; // ✅ ADD THIS
 
-export default function FieldsLayout({ children }: { children: React.ReactNode }) {
-  const [supabaseClient] = useState(() => createPagesBrowserClient());
+export default function RootLayout({ children }) {
+  const [supabase] = useState(() => createBrowserSupabaseClient());
 
   return (
-    <SessionContextProvider supabaseClient={supabaseClient}>
-      <AuthProvider>{children}</AuthProvider>
-    </SessionContextProvider>
+    <html lang="en">
+      <body>
+        <AuthProvider> {/* ✅ WRAPPING ENTIRE APP */}
+          <SessionContextProvider supabaseClient={supabase}>
+            {children}
+          </SessionContextProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }
