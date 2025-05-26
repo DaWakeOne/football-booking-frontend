@@ -2,13 +2,11 @@
 
 import { useAuth } from '@/components/auth-context';
 
+// ✅ This forces the page to be rendered only on the client
+export const dynamic = 'force-dynamic';
+
 export default function FieldsPage() {
   const { user } = useAuth();
-
-  // Prevent rendering until user is available on the client
-  if (typeof window !== 'undefined' && !user) {
-    return <p>Loading...</p>;
-  }
 
   return (
     <div>
