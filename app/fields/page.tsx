@@ -1,11 +1,17 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-context';
 
-export const dynamic = 'force-dynamic';
-
 export default function FieldsPage() {
+  const [isMounted, setIsMounted] = useState(false);
   const { user } = useAuth();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
 
   return (
     <div>
