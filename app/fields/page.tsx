@@ -1,11 +1,14 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useAuth } from '@/components/auth-context';
 
 export default function FieldsPage() {
   const { user } = useAuth();
+
+  // Avoid any server-side rendering attempt
+  if (typeof window === 'undefined') {
+    return null;
+  }
 
   return (
     <div>
