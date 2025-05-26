@@ -1,40 +1,38 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 
 export function OwnerSignupForm() {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const router = useRouter();
+  const supabase = createPagesBrowserClient();
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError("")
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-    // Basic validation
     if (!email || !password || !confirmPassword) {
-      setError("All fields are required")
-      return
+      setError("All fields are required");
+      return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
+      setError("Passwords do not match");
+      return;
     }
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
 
-      // Sign up the user with Supabase
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -44,30 +42,31 @@ export function OwnerSignupForm() {
             role: "owner",
           },
         },
-      })
+      });
 
-      if (signUpError) throw signUpError
+      if (signUpError) throw signUpError;
 
       if (data.user) {
-        // Show success message
-        setSuccess(true)
-
-        // Clear form
-        setEmail("")
-        setPassword("")
-        setConfirmPassword("")
+        setSuccess(true);
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
       }
-    } catch (err) {
-      console.error("Signup error:", err)
-      setError(err.message || "An error occurred during signup")
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      setError(err.message || "An error occurred during signup");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
-      {error && <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+      {error && (
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {success && (
         <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
@@ -149,5 +148,5 @@ export function OwnerSignupForm() {
         </button>
       </div>
     </div>
-  )
+  );
 }
